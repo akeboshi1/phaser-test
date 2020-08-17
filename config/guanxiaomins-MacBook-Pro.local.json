@@ -1,0 +1,16 @@
+{
+  "api_root": "https://api-dev.tooqing.com/",
+  "osd": "https://osd-alpha.tooqing.com/",
+  "gateway": {
+    "host": "gdev.tooqing.com",
+    "port": 11100,
+    "secure": true
+  },
+  "game_id": "5cd8cf04cbcbf91a0afc3f96.5e410ba50681ad5557b4d6e9",
+  "virtual_world_id": "0",
+  "pure": false,
+  "modulePath": "http://localhost:8082/js/",
+  "modules": [
+    "picatown"
+  ]
+}

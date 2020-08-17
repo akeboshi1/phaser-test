@@ -9,10 +9,13 @@
       "dom"
     ],
     "declaration": false,
-    "sourceMap": true,
+    "noImplicitAny": false,
+    "sourceMap": false,
+    "outDir": "types",
     "typeRoots": [
-      "node_modules/@types"
+      "node_modules/@types",
+      "node_modules/phaser/types"
     ]
   },
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
 }

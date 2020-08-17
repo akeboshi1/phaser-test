@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8" name="viewport" content="width=device-width,height=device-height" />
     <title>Phaser3</title>
     <style>
         body {
@@ -24,15 +24,24 @@
 </head>
 
 <body>
+    <img id="testImg" src="" />
     <div class="container">
         <div id="game">
         </div>
-        <script src="dist/app.js"></script>
+        <script src="./dist/app.js"></script>
+        <!-- <script src="node_modules/game-core/dist/js/index.js"></script> -->
     </div>
     <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            
+        window.addEventListener('load', (event) => {
+           // const app = new window["test"]();
+            if (!window.navigator) {
+                // FR.Msg.alert("提示", "当前设备：移动端APP")
+                window.addEventListener("resize", (e) => {
+                    // app.onResize(window.innerWidth, window.innerHeight);
+                });
+            }
         });
+
     </script>
 
 </body>

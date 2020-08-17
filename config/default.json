@@ -1,0 +1,12 @@
+{
+    "debug":true,
+    "api_root": "https://api-dev.tooqing.com/",
+    "osd": "https://osd.tooqing.com/",
+    "gateway": {
+        "host": "115.182.75.99",
+        "port": 22100,
+        "secure": false
+    },
+    "game_id": "5e5dc4d80681ad5557b4d7a6",
+    "virtual_world_id": "0"
+}
