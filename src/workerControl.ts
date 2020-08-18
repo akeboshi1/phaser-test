@@ -124,37 +124,43 @@ export class WorkerControl {
         const worker = new Worker(url);
         this.workers[name] = worker;
 
-        worker.addEventListener('message', (event) => {
-            //callMainMethods
-        });
-        worker.addEventListener('error', () => {
+        worker.addEventListener('message', this.onGetMessage);
+    }
+    private onGetMessage(data) {
+        if (data.code != undefined && data.params != undefined) {
+            this.callMainMethods(data.code, data.params);
+        }
+    }
 
-        });
+    public destroyWorker(name) {
+        if (!(name in this.workers)) return;
+
+        const worker = this.workers[name];
+        worker.removeEventListener("message", this.onGetMessage);
+        worker.terminate();
+        delete this.workers[name];
     }
 
     // worker => main
     private rpcMethods_main: IRPCMethods;
     // main. 
-    public registerMainMethods(code: number, fn: (params: IRPCMethodParams) => void) {
+    public registerMainMethods(code: number, fn: (params: PBPacket) => void) {
         this.rpcMethods_main[code] = {
             fn: fn
         };
     }
     // worker. 
-    public callMainMethods(code: number, params: IRPCMethodParams) {
+    private callMainMethods(code: number, params: PBPacket) {
+        if (!(code in this.rpcMethods_main)) return;
+
         this.rpcMethods_main[code].fn(params);
     }
 
     // main => worker
-    // private rpcMethods_worker: IRPCMethods;
-    // // worker. 
-    // public registerWorkerMethods(code: number, fn: (params: IRPCMethodParams) => void) {
-    //     this.rpcMethods_worker[code] = {
-    //         fn: fn
-    //     };
-    // }
     // mian. 
-    public callWorkerMethods(name: string, code: number, params: IRPCMethodParams) {
+    public callWorkerMethods(name: string, code: number, params: PBPacket) {
+        if (!(name in this.workers)) return;
+
         this.workers[name].postMessage({ code, params });
     }
 }
@@ -163,13 +169,9 @@ interface IWorkers {
     [x: string]: Worker;
 }
 
-interface IRPCMethodParams {
-    [x: string]: any;
-}
-
 interface IRPCMethods {
     [x: number]: {
-        fn: (params: IRPCMethodParams) => any;
+        fn: (params: PBPacket) => any;
     };
 }
 // @Injectable({ provide: WorkerControl })
