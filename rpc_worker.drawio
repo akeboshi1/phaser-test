@@ -1,0 +1,70 @@
+<mxfile host="8b937fc4-1a96-4201-9d96-19c8d35ed0a2" modified="2020-08-17T10:08:50.755Z" agent="5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Code/1.48.0 Chrome/78.0.3904.130 Electron/7.3.2 Safari/537.36" etag="apT0w4kVX1ui60FDgOV3" version="13.1.3" pages="2">
+    <diagram id="6hGFLwfOUW9BJ-s0fimq" name="内部实现">
+        <mxGraphModel dx="1122" dy="641" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="jOXM-FT1-cvVt0MKiYA--19" target="jOXM-FT1-cvVt0MKiYA--15">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--22" value="post+onMessage" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="jOXM-FT1-cvVt0MKiYA--21">
+                    <mxGeometry x="0.1757" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--26" value="&lt;p style=&quot;margin: 0px ; margin-top: 4px ; text-align: center ; text-decoration: underline&quot;&gt;&lt;b&gt;IRPCMethods&lt;/b&gt;&lt;/p&gt;&lt;hr&gt;&lt;p style=&quot;margin: 0px ; margin-left: 8px&quot;&gt;[x: string]: {&lt;/p&gt;&lt;p style=&quot;margin: 0px ; margin-left: 8px&quot;&gt;fn:(params:&amp;nbsp;&lt;b style=&quot;text-align: center&quot;&gt;IRPCMethodParams&lt;/b&gt;) =&amp;gt; any&lt;/p&gt;&lt;p style=&quot;margin: 0px ; margin-left: 8px&quot;&gt;}&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=12;fontFamily=Helvetica;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="30" y="530" width="250" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--27" value="&lt;p style=&quot;margin: 0px ; margin-top: 4px ; text-align: center ; text-decoration: underline&quot;&gt;&lt;b&gt;IRPCMethodParams&lt;/b&gt;&lt;/p&gt;&lt;hr&gt;&lt;p style=&quot;margin: 0px ; margin-left: 8px&quot;&gt;[x: string]: any&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=12;fontFamily=Helvetica;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="30" y="670" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="jOXM-FT1-cvVt0MKiYA--27" target="jOXM-FT1-cvVt0MKiYA--27">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--11" value="ServerWorker" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" vertex="1" parent="1">
+                    <mxGeometry x="34" y="90" width="380" height="160" as="geometry">
+                        <mxRectangle x="70" y="80" width="110" height="26" as="alternateBounds"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--12" value="+ rpc_methods: IRPCMethods" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="jOXM-FT1-cvVt0MKiYA--11">
+                    <mxGeometry y="26" width="380" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--13" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;" vertex="1" parent="jOXM-FT1-cvVt0MKiYA--11">
+                    <mxGeometry y="52" width="380" height="8" as="geometry"/>
+                </mxCell>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--14" value="+ register(name: string, fn: (params: IRPCMethodParams) =&gt; any&#10;): void" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="jOXM-FT1-cvVt0MKiYA--11">
+                    <mxGeometry y="60" width="380" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--15" value="+ runMethod(name: string, params: IRPCMethodParams&#10;): void" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="jOXM-FT1-cvVt0MKiYA--11">
+                    <mxGeometry y="110" width="380" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--16" value="ClientWorker" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" vertex="1" parent="1">
+                    <mxGeometry x="460" y="340" width="310" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--17" value="+ " style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="jOXM-FT1-cvVt0MKiYA--16">
+                    <mxGeometry y="26" width="310" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--18" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;" vertex="1" parent="jOXM-FT1-cvVt0MKiYA--16">
+                    <mxGeometry y="52" width="310" height="8" as="geometry"/>
+                </mxCell>
+                <mxCell id="jOXM-FT1-cvVt0MKiYA--19" value="+ call(name: string, params: IRPCMethodParams&#10;)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="jOXM-FT1-cvVt0MKiYA--16">
+                    <mxGeometry y="60" width="310" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="gXasSLuEYv3nEdgZNRkb-4" value="    + on(eventName: string, fn) // call(&quot;rpc_on&quot;, &#10;)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="jOXM-FT1-cvVt0MKiYA--16">
+                    <mxGeometry y="100" width="310" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="gXasSLuEYv3nEdgZNRkb-5" value="    + off() // call(&quot;rpc_off&quot;, ...)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="jOXM-FT1-cvVt0MKiYA--16">
+                    <mxGeometry y="140" width="310" height="40" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="UXj7qPXRAug2HwEHLvp0" name="使用场景">
+        <mxGraphModel dx="1122" dy="641" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="n_pkP-RTFJkKKBHW7Ze8-0"/>
+                <mxCell id="n_pkP-RTFJkKKBHW7Ze8-1" parent="n_pkP-RTFJkKKBHW7Ze8-0"/>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
