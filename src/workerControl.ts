@@ -117,6 +117,60 @@ export class WorkerControl {
                 break;
         }
     }
+
+    // create worker
+    private workers: IWorkers;
+    public createWorker(name: string, url: string) {
+        const worker = new Worker(url);
+        this.workers[name] = worker;
+
+        worker.addEventListener('message', (event) => {
+            //callMainMethods
+        });
+        worker.addEventListener('error', () => {
+
+        });
+    }
+
+    // worker => main
+    private rpcMethods_main: IRPCMethods;
+    // main. 
+    public registerMainMethods(code: number, fn: (params: IRPCMethodParams) => void) {
+        this.rpcMethods_main[code] = {
+            fn: fn
+        };
+    }
+    // worker. 
+    public callMainMethods(code: number, params: IRPCMethodParams) {
+        this.rpcMethods_main[code].fn(params);
+    }
+
+    // main => worker
+    // private rpcMethods_worker: IRPCMethods;
+    // // worker. 
+    // public registerWorkerMethods(code: number, fn: (params: IRPCMethodParams) => void) {
+    //     this.rpcMethods_worker[code] = {
+    //         fn: fn
+    //     };
+    // }
+    // mian. 
+    public callWorkerMethods(name: string, code: number, params: IRPCMethodParams) {
+        this.workers[name].postMessage({ code, params });
+    }
+}
+
+interface IWorkers {
+    [x: string]: Worker;
+}
+
+interface IRPCMethodParams {
+    [x: string]: any;
+}
+
+interface IRPCMethods {
+    [x: number]: {
+        fn: (params: IRPCMethodParams) => any;
+    };
 }
 // @Injectable({ provide: WorkerControl })
 // export class DemoControl {
