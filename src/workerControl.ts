@@ -144,13 +144,13 @@ export class WorkerControl {
     // worker => main
     private rpcMethods_main: IRPCMethods;
     // main. 
-    public registerMainMethods(code: number, fn: (params: PBPacket) => void) {
+    public registerMainMethods(code: number, fn: (params: any) => void) {
         this.rpcMethods_main[code] = {
             fn: fn
         };
     }
     // worker. 
-    private callMainMethods(code: number, params: PBPacket) {
+    private callMainMethods(code: number, params: any) {
         if (!(code in this.rpcMethods_main)) return;
 
         this.rpcMethods_main[code].fn(params);
@@ -158,7 +158,7 @@ export class WorkerControl {
 
     // main => worker
     // mian. 
-    public callWorkerMethods(name: string, code: number, params: PBPacket) {
+    public callWorkerMethods(name: string, code: number, params: any) {
         if (!(name in this.workers)) return;
 
         this.workers[name].postMessage({ code, params });
@@ -171,7 +171,7 @@ interface IWorkers {
 
 interface IRPCMethods {
     [x: number]: {
-        fn: (params: PBPacket) => any;
+        fn: (params: any) => any;
     };
 }
 // @Injectable({ provide: WorkerControl })

@@ -10,13 +10,14 @@
     "dev": "webpack-dev-server --mode development",
     "dev:core": "rimraf dist && webpack --config webpack.config.js",
     "dev:mod": "webpack --config webpack.mod.config.js",
-    "build": "webpack",
+    "build": "rm -rf dist && webpack",
     "start": "webpack-dev-server --mode development --config webpack.config.js",
     "testNode": "rimraf dist && webpack --config webpack.test.config.js"
   },
   "dependencies": {
     "clean-webpack-plugin": "^3.0.0",
     "cli.js": "^1.0.2",
+    "common-injector": "^1.0.0",
     "copy-webpack-plugin": "^5.0.4",
     "dts-dom": "^3.6.0",
     "expose-loader": "^0.7.5",
@@ -25,6 +26,7 @@
     "jsdoc": "^3.6.4",
     "phaser": "^3.23.0",
     "phaser3-rex-plugins": "https://code.apowo.com/PixelPai/phaser3-rexui.git",
+    "pixelpai_proto": "git+ssh://git@code.apowo.com:PixelPai/pixelpai_proto.git#typescriptdev",
     "remove": "^0.1.5",
     "ts-loader": "^6.2.1",
     "tslint": "^6.0.0",

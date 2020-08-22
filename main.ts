@@ -3,6 +3,7 @@ import "phaser";
 // import { Base64, decode, encode } from "js-base64";
 import { WorkerControl } from "./src/workerControl";
 import { Inject } from "common-injector";
+import ForemanWorker from "worker-loader?name=dist/[name].js!./foremanworker";
 export class World {
     constructor() {
         const config = {
@@ -15,13 +16,19 @@ export class World {
         const game: Phaser.Game = new Phaser.Game(config);
         game.scene.add(GameScene.name, GameScene);
         game.scene.start(GameScene.name);
+
+        const foreman = new ForemanWorker();
+        foreman.postMessage("start");
+        foreman.onmessage = (e) => {
+            console.log("Main got message <" + e.data + ">");
+        };
     }
 }
 
 export class GameScene extends Phaser.Scene {
     private graphics: Phaser.GameObjects.Graphics;
     private rt: Phaser.GameObjects.RenderTexture;
-    @Inject() private workerControl: WorkerControl;
+    // @Inject() private workerControl: WorkerControl;
     constructor() {
         super({ key: GameScene.name });
     }
@@ -32,8 +39,8 @@ export class GameScene extends Phaser.Scene {
         this.graphics.setVisible(false);
 
         this.rt = this.add.renderTexture(400, 300, 400, 400).setOrigin(0.5);
-        this.workerControl = new WorkerControl();
-        this.workerControl.startHandler();
+        // this.workerControl = new WorkerControl();
+        // this.workerControl.startHandler();
         // this.worker = new TestWorker();
         // const self = this;
         // this.worker.onmessage = (event: any) => {
