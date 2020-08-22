@@ -16,12 +16,6 @@ export class World {
         const game: Phaser.Game = new Phaser.Game(config);
         game.scene.add(GameScene.name, GameScene);
         game.scene.start(GameScene.name);
-
-        const foreman = new ForemanWorker();
-        foreman.postMessage("start");
-        foreman.onmessage = (e) => {
-            console.log("Main got message <" + e.data + ">");
-        };
     }
 }
 
@@ -29,16 +23,42 @@ export class GameScene extends Phaser.Scene {
     private graphics: Phaser.GameObjects.Graphics;
     private rt: Phaser.GameObjects.RenderTexture;
     // @Inject() private workerControl: WorkerControl;
+
+    private foreman: Worker;
+
     constructor() {
         super({ key: GameScene.name });
     }
 
+    public preload() {
+        this.load.image("bubble", "./resource/bubblebg.png");
+
+        this.foreman = new ForemanWorker();
+        this.foreman.postMessage("init");
+        this.foreman.onmessage = (e) => {
+            console.log("Main got message <" + e.data + ">");
+        };
+    }
 
     public create() {
         this.graphics = this.add.graphics();
         this.graphics.setVisible(false);
 
         this.rt = this.add.renderTexture(400, 300, 400, 400).setOrigin(0.5);
+
+        const imgBtn1 = this.add.image(200, 150, "bubble");
+        imgBtn1.setInteractive();
+        imgBtn1.once("pointerup", () => {
+            console.log("pointerup ; start test");
+            this.foreman.postMessage("register");
+        });
+        const imgBtn2 = this.add.image(300, 150, "bubble");
+        imgBtn2.setInteractive();
+        imgBtn2.once("pointerup", () => {
+            console.log("pointerup ; start test");
+            this.foreman.postMessage("start");
+        });
+
         // this.workerControl = new WorkerControl();
         // this.workerControl.startHandler();
         // this.worker = new TestWorker();
