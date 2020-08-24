@@ -1,5 +1,6 @@
 import { RPCPeer } from "./src/rpc.peer";
 import { webworker_rpc } from "pixelpai_proto";
+import { RPCExecutor } from "./src/rpc.executor";
 
 onmessage = (e) => {
     const { key } = e.data;
@@ -13,7 +14,7 @@ onmessage = (e) => {
         const param1 = new webworker_rpc.Param();
         param1.t = webworker_rpc.ParamType.str;
         param1.valStr = "xxx";
-        contextC.peer.registerExecutor("methodC", "contextC", contextC, [param1]);
+        contextC.peer.registerExecutor(contextC, new RPCExecutor("methodC", "contextC", [param1]));
     }
 }
 

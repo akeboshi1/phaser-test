@@ -3,6 +3,8 @@ import TaskWorkerB from "worker-loader?name=dist/[name].js!./taskworkerb";
 import TaskWorkerC from "worker-loader?name=dist/[name].js!./taskworkerc";
 import { RPCPeer } from "./src/rpc.peer";
 import { webworker_rpc } from "pixelpai_proto";
+import { RPCExecutor } from "./src/rpc.executor";
+import { RPCWebWorkerPacket } from "./src/rpc.webworkerpacket";
 
 const worker: Worker = self as any;
 worker.onmessage = (e) => {
@@ -48,7 +50,7 @@ worker.onmessage = (e) => {
         const param1 = new webworker_rpc.Param();
         param1.t = webworker_rpc.ParamType.str;
         param1.valStr = "callbackFrom";
-        context1.peer.registerExecutor("foremanCallback", "context1", context1, [param1]);
+        context1.peer.registerExecutor(context1, new RPCExecutor("foremanCallback", "context1", [param1]));
 
         context1.workerA.postMessage({ "key": "register" });
         context1.workerB.postMessage({ "key": "register" });
@@ -67,19 +69,19 @@ worker.onmessage = (e) => {
         const paramA = new webworker_rpc.Param();
         paramA.t = webworker_rpc.ParamType.boolean;
         paramA.valBool = true;
-        context1.peer.execute("workerA", "methodA", "contextA", [paramA], callback);
+        context1.peer.execute("workerA", new RPCWebWorkerPacket(context1.peer.name, "methodA", "contextA", [paramA], callback));
 
         // B
         const paramB = new webworker_rpc.Param();
         paramB.t = webworker_rpc.ParamType.num;
         paramB.valNum = 333;
-        context1.peer.execute("workerB", "methodB", "contextB", [paramB], callback);
+        context1.peer.execute("workerB", new RPCWebWorkerPacket(context1.peer.name, "methodB", "contextB", [paramB], callback));
 
         // C
         const paramC = new webworker_rpc.Param();
         paramC.t = webworker_rpc.ParamType.str;
         paramC.valStr = "三三三";
-        context1.peer.execute("workerC", "methodC", "contextC", [paramC], callback);
+        context1.peer.execute("workerC", new RPCWebWorkerPacket(context1.peer.name, "methodC", "contextC", [paramC], callback));
     }
 }
 

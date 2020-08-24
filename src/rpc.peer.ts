@@ -1,13 +1,15 @@
 import { webworker_rpc } from "pixelpai_proto";
+import { RPCExecutor } from "./rpc.executor";
+import { RPCWebWorkerPacket } from "./rpc.webworkerpacket";
 
 export const MESSAGEKEY_LINK: string = "link";
 export const MESSAGEKEY_ADDREGISTRY: string = "addRegistry";
 export const MESSAGEKEY_RUNMETHOD: string = "runMethod";
 
 export class RPCPeer {
-    private name: string;
+    public name: string;
     private worker: Worker;
-    private registry: webworker_rpc.Executor[];
+    private registry: RPCExecutor[];
     private channels: Map<string, MessagePort>;
     private contexts: Map<string, any>;
 
@@ -47,42 +49,25 @@ export class RPCPeer {
         });
     }
 
-    public registerExecutor(methodName: string, contextName: string, context: any, params?: webworker_rpc.Param[]) {
+    public registerExecutor(context: any, executor: RPCExecutor) {
         console.log("registerMethod: ", this);
-        const newData = new webworker_rpc.Executor();
-        newData.method = methodName;
-        if (contextName !== undefined) newData.context = contextName;
-        if (params !== undefined) newData.params = params;
 
-        this.registry.push(newData);
-        this.contexts.set(contextName, context);
+        this.registry.push(executor);
+        this.contexts.set(executor.context, context);
 
         this.channels.forEach((port) => {
-            port.postMessage({ "key": MESSAGEKEY_ADDREGISTRY, "data": newData });// TODO:transterable
+            port.postMessage({ "key": MESSAGEKEY_ADDREGISTRY, "data": executor });// TODO:transterable
         });
     }
 
-    public execute(worker: string, methodName: string, context?: string, params?: webworker_rpc.Param[], callback?: webworker_rpc.Executor) {
+    public execute(worker: string, packet: RPCWebWorkerPacket) {
         console.log("callMethod: ", this);
-        const executor = this.registry.find((x) => x.context === context && x.method === methodName);
+        const executor = this.registry.find((x) => x.context === packet.header.remoteExecutor.context &&
+            x.method === packet.header.remoteExecutor.method);
         if (executor === null) {
-            console.error("method <" + methodName + "> not register");
+            console.error("method <" + packet.header.remoteExecutor.method + "> not register");
             return;
         }
-
-        // if (!this.channels.has(worker)) {
-        //     console.error("worker <" + worker + "> not found", this.channels);
-        //     return;
-        // }
-
-        const packet = new webworker_rpc.WebWorkerPacket();
-        packet.header = new webworker_rpc.Header();
-        packet.header.serviceName = this.name;
-        packet.header.remoteExecutor = new webworker_rpc.Executor();
-        packet.header.remoteExecutor.method = methodName;
-        if (context !== undefined) packet.header.remoteExecutor.context = context;
-        if (params !== undefined) packet.header.remoteExecutor.params = params;
-        if (callback !== undefined) packet.header.callbackExecutor = callback;
 
         if (this.channels.has(worker))
             this.channels.get(worker).postMessage({ "key": MESSAGEKEY_RUNMETHOD, "data": packet });// TODO:transterable
@@ -128,11 +113,11 @@ export class RPCPeer {
             console.warn("<data> not in ev.data");
             return;
         }
-        if (!(data instanceof webworker_rpc.Executor)) {
-            console.warn("<data> type error: ", data);
-            return;
-        }
-        this.registry.push(data as webworker_rpc.Executor);
+        // if (!(data instanceof RPCExecutor)) {
+        //     console.warn("<data> type error: ", data);
+        //     return;
+        // }
+        this.registry.push(data as RPCExecutor);
     }
     private onMessage_RunMethod(ev: MessageEvent) {
         console.log("onMessage_RunMethod:", ev.data);
@@ -141,11 +126,11 @@ export class RPCPeer {
             console.warn("<data> not in ev.data");
             return;
         }
-        if (!(data instanceof webworker_rpc.WebWorkerPacket)) {
-            console.warn("<data> type error: ", data);
-            return;
-        }
-        const packet: webworker_rpc.WebWorkerPacket = data as webworker_rpc.WebWorkerPacket;
+        // if (!(data instanceof RPCWebWorkerPacket)) {
+        //     console.warn("<data> type error: ", data);
+        //     return;
+        // }
+        const packet: RPCWebWorkerPacket = data as RPCWebWorkerPacket;
 
         const remoteExecutor = packet.header.remoteExecutor;
 
@@ -187,7 +172,7 @@ export class RPCPeer {
                     // for (const p of callback.params) {
 
                     // }
-                    this.execute(packet.header.serviceName, callback.method, callback.context, callbackParams);
+                    this.execute(packet.header.serviceName, new RPCWebWorkerPacket(this.name, callback.method, callback.context, callbackParams));
                 }
             });
         }
