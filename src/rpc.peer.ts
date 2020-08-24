@@ -29,6 +29,10 @@ export class RPCPeer {
 
         this.worker.addEventListener("message", (ev: MessageEvent) => {
             const { key } = ev.data;
+            if (!key) {
+                console.warn("<key> not in ev.data");
+                return;
+            }
 
             console.log("peer on message:", ev.data);
             switch (key) {
@@ -89,6 +93,10 @@ export class RPCPeer {
         console.log("onMessage_Link:", this.channels);
         port.onmessage = (ev: MessageEvent) => {
             const { key } = ev.data;
+            if (!key) {
+                console.warn("<key> not in ev.data");
+                return;
+            }
             switch (key) {
                 case MESSAGEKEY_ADDREGISTRY:
                     this.onMessage_AddRegistry(ev);
@@ -106,17 +114,37 @@ export class RPCPeer {
 
     private onMessage_Link(ev: MessageEvent) {
         const { data } = ev.data;
+        if (!data) {
+            console.warn("<data> not in ev.data");
+            return;
+        }
         const port = ev.ports[0];
         this.addLink(data, port);
     }
     private onMessage_AddRegistry(ev: MessageEvent) {
         console.log("onMessage_AddRegistry:", ev.data);
         const { data } = ev.data;
+        if (!data) {
+            console.warn("<data> not in ev.data");
+            return;
+        }
+        if (!(data instanceof webworker_rpc.Executor)) {
+            console.warn("<data> type error: ", data);
+            return;
+        }
         this.registry.push(data as webworker_rpc.Executor);
     }
     private onMessage_RunMethod(ev: MessageEvent) {
         console.log("onMessage_RunMethod:", ev.data);
         const { data } = ev.data;
+        if (!data) {
+            console.warn("<data> not in ev.data");
+            return;
+        }
+        if (!(data instanceof webworker_rpc.WebWorkerPacket)) {
+            console.warn("<data> type error: ", data);
+            return;
+        }
         const packet: webworker_rpc.WebWorkerPacket = data as webworker_rpc.WebWorkerPacket;
 
         const remoteExecutor = packet.header.remoteExecutor;
