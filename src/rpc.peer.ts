@@ -7,51 +7,43 @@ export const MESSAGEKEY_RUNMETHOD: string = "runMethod";
 export class RPCPeer {
     private name: string;
     private worker: Worker;
-    private onMessageHandlers;
     private registry: webworker_rpc.Executor[];
     private channels: Map<string, MessagePort>;
     private contexts: Map<string, any>;
 
     constructor(name: string, w: Worker) {
+        if (!w) {
+            console.error("param <worker> error");
+            return;
+        }
+        if (!name) {
+            console.error("param <name> error");
+            return;
+        }
+
         this.name = name;
         this.worker = w;
         this.registry = [];
         this.channels = new Map();
         this.contexts = new Map();
 
-        // register onMessage handlers
-        this.onMessageHandlers = {};
-        this.onMessageHandlers[MESSAGEKEY_LINK] = this.onMessage_Link;
-        this.onMessageHandlers[MESSAGEKEY_ADDREGISTRY] = this.onMessage_AddRegistry;
-        this.onMessageHandlers[MESSAGEKEY_RUNMETHOD] = this.onMessage_RunMethod;
+        this.worker.addEventListener("message", (ev: MessageEvent) => {
+            const { key } = ev.data;
 
-        const handler = this.onMessageHandlers;
-        const _self = this;
-        this.worker.addEventListener("message", (e) => {
-            const { key } = e.data;
-            // if (key in handler) {
-            //     handler[key](_self, e);
-            // }
-
-            console.log("peer on message:", e.data);
+            console.log("peer on message:", ev.data);
             switch (key) {
                 case MESSAGEKEY_LINK:
-                    _self.onMessage_Link(_self, e);
-                    break;
-                case MESSAGEKEY_ADDREGISTRY:
-                    _self.onMessage_AddRegistry(_self, e);
-                    break;
-                case MESSAGEKEY_RUNMETHOD:
-                    _self.onMessage_RunMethod(_self, e);
+                    this.onMessage_Link(ev);
                     break;
 
                 default:
+                    console.warn("got message outof control: ", ev.data);
                     break;
             }
         });
     }
 
-    public registerMethod(methodName: string, contextName: string, context: any, params?: webworker_rpc.Param[]) {
+    public registerExecutor(methodName: string, contextName: string, context: any, params?: webworker_rpc.Param[]) {
         console.log("registerMethod: ", this);
         const newData = new webworker_rpc.Executor();
         newData.method = methodName;
@@ -66,7 +58,7 @@ export class RPCPeer {
         });
     }
 
-    public callMethod(worker: string, methodName: string, context?: string, params?: webworker_rpc.Param[], callback?: webworker_rpc.Executor) {
+    public execute(worker: string, methodName: string, context?: string, params?: webworker_rpc.Param[], callback?: webworker_rpc.Executor) {
         console.log("callMethod: ", this);
         const executor = this.registry.find((x) => x.context === context && x.method === methodName);
         if (executor === null) {
@@ -95,35 +87,36 @@ export class RPCPeer {
     public addLink(worker: string, port: MessagePort) {
         this.channels.set(worker, port);
         console.log("onMessage_Link:", this.channels);
-        port.onmessage = (_e) => {
-            const { key } = _e.data;
+        port.onmessage = (ev: MessageEvent) => {
+            const { key } = ev.data;
             switch (key) {
                 case MESSAGEKEY_ADDREGISTRY:
-                    this.onMessage_AddRegistry(this, _e);
+                    this.onMessage_AddRegistry(ev);
                     break;
                 case MESSAGEKEY_RUNMETHOD:
-                    this.onMessage_RunMethod(this, _e);
+                    this.onMessage_RunMethod(ev);
                     break;
 
                 default:
+                    console.warn("got message outof control: ", ev.data);
                     break;
             }
         }
     }
 
-    private onMessage_Link(peer: RPCPeer, e) {
-        const { data } = e.data;
-        const port = e.ports[0];
-        peer.addLink(data, port);
+    private onMessage_Link(ev: MessageEvent) {
+        const { data } = ev.data;
+        const port = ev.ports[0];
+        this.addLink(data, port);
     }
-    private onMessage_AddRegistry(peer: RPCPeer, e) {
-        console.log("onMessage_AddRegistry:", e.data);
-        const { data } = e.data;
-        peer.registry.push(data as webworker_rpc.Executor);
+    private onMessage_AddRegistry(ev: MessageEvent) {
+        console.log("onMessage_AddRegistry:", ev.data);
+        const { data } = ev.data;
+        this.registry.push(data as webworker_rpc.Executor);
     }
-    private onMessage_RunMethod(peer: RPCPeer, e) {
-        console.log("onMessage_RunMethod:", e.data);
-        const { data } = e.data;
+    private onMessage_RunMethod(ev: MessageEvent) {
+        console.log("onMessage_RunMethod:", ev.data);
+        const { data } = ev.data;
         const packet: webworker_rpc.WebWorkerPacket = data as webworker_rpc.WebWorkerPacket;
 
         const remoteExecutor = packet.header.remoteExecutor;
@@ -154,19 +147,19 @@ export class RPCPeer {
                 }
             }
         }
-        const result = peer.executeFunctionByName(remoteExecutor.method, remoteExecutor.context, params);
+        const result = this.executeFunctionByName(remoteExecutor.method, remoteExecutor.context, params);
         if (result !== null && result instanceof Promise) {
-            result.then((e) => {
+            result.then((params) => {
                 // if (e instanceof webworker_rpc.Param[]) return; // TODO
 
                 if (packet.header.callbackExecutor) {
                     const callback = packet.header.callbackExecutor;
-                    const callbackParams = e as webworker_rpc.Param[];
+                    const callbackParams = params as webworker_rpc.Param[];
                     // check param type
                     // for (const p of callback.params) {
 
                     // }
-                    peer.callMethod(packet.header.serviceName, callback.method, callback.context, callbackParams);
+                    this.execute(packet.header.serviceName, callback.method, callback.context, callbackParams);
                 }
             });
         }

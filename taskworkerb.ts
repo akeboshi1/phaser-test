@@ -13,7 +13,7 @@ onmessage = (e) => {
         const param1 = new webworker_rpc.Param();
         param1.t = webworker_rpc.ParamType.num;
         param1.valNum = 123;
-        contextB.peer.registerMethod("methodB", "contextB", contextB, [param1]);
+        contextB.peer.registerExecutor("methodB", "contextB", contextB, [param1]);
     }
 }
 

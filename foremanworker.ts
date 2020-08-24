@@ -48,7 +48,7 @@ worker.onmessage = (e) => {
         const param1 = new webworker_rpc.Param();
         param1.t = webworker_rpc.ParamType.str;
         param1.valStr = "callbackFrom";
-        context1.peer.registerMethod("foremanCallback", "context1", context1, [param1]);
+        context1.peer.registerExecutor("foremanCallback", "context1", context1, [param1]);
 
         context1.workerA.postMessage({ "key": "register" });
         context1.workerB.postMessage({ "key": "register" });
@@ -67,19 +67,19 @@ worker.onmessage = (e) => {
         const paramA = new webworker_rpc.Param();
         paramA.t = webworker_rpc.ParamType.boolean;
         paramA.valBool = true;
-        context1.peer.callMethod("workerA", "methodA", "contextA", [paramA], callback);
+        context1.peer.execute("workerA", "methodA", "contextA", [paramA], callback);
 
         // B
         const paramB = new webworker_rpc.Param();
         paramB.t = webworker_rpc.ParamType.num;
         paramB.valNum = 333;
-        context1.peer.callMethod("workerB", "methodB", "contextB", [paramB], callback);
+        context1.peer.execute("workerB", "methodB", "contextB", [paramB], callback);
 
         // C
         const paramC = new webworker_rpc.Param();
         paramC.t = webworker_rpc.ParamType.str;
         paramC.valStr = "三三三";
-        context1.peer.callMethod("workerC", "methodC", "contextC", [paramC], callback);
+        context1.peer.execute("workerC", "methodC", "contextC", [paramC], callback);
     }
 }
 
