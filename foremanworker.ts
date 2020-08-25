@@ -3,8 +3,7 @@ import TaskWorkerB from "worker-loader?name=dist/[name].js!./taskworkerb";
 import TaskWorkerC from "worker-loader?name=dist/[name].js!./taskworkerc";
 import { RPCPeer } from "./src/rpc.peer";
 import { webworker_rpc } from "pixelpai_proto";
-import { RPCExecutor } from "./src/rpc.executor";
-import { RPCWebWorkerPacket } from "./src/rpc.webworkerpacket";
+import { RPCExecutor, RPCExecutePacket } from "./src/rpc.message";
 
 // 主worker
 const worker: Worker = self as any;
@@ -72,19 +71,19 @@ worker.onmessage = (e) => {
         const paramA = new webworker_rpc.Param();
         paramA.t = webworker_rpc.ParamType.boolean;
         paramA.valBool = true;
-        peer.execute("workerA", new RPCWebWorkerPacket(peer.name, "methodA", "contextA", [paramA], callback));
+        peer.execute("workerA", new RPCExecutePacket(peer.name, "methodA", "contextA", [paramA], callback));
 
         // B
         const paramB = new webworker_rpc.Param();
         paramB.t = webworker_rpc.ParamType.num;
         paramB.valNum = 333;
-        peer.execute("workerB", new RPCWebWorkerPacket(peer.name, "methodB", "contextB", [paramB], callback));
+        peer.execute("workerB", new RPCExecutePacket(peer.name, "methodB", "contextB", [paramB], callback));
 
         // C
         const paramC = new webworker_rpc.Param();
         paramC.t = webworker_rpc.ParamType.str;
         paramC.valStr = "三三三";
-        peer.execute("workerC", new RPCWebWorkerPacket(peer.name, "methodC", "contextC", [paramC], callback));
+        peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "contextC", [paramC], callback));
     }
 }
 

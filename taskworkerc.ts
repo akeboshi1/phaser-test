@@ -1,6 +1,6 @@
 import { RPCPeer } from "./src/rpc.peer";
 import { webworker_rpc } from "pixelpai_proto";
-import { RPCExecutor } from "./src/rpc.executor";
+import { RPCExecutor } from "./src/rpc.message";
 
 onmessage = (e) => {
     const { key } = e.data;

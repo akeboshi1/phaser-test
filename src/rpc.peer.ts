@@ -1,6 +1,5 @@
 import { webworker_rpc } from "pixelpai_proto";
-import { RPCExecutor } from "./rpc.executor";
-import { RPCWebWorkerPacket } from "./rpc.webworkerpacket";
+import { RPCMessage, RPCExecutor, RPCExecutePacket } from "./rpc.message";
 
 export const MESSAGEKEY_LINK: string = "link";
 export const MESSAGEKEY_ADDREGISTRY: string = "addRegistry";
@@ -53,6 +52,18 @@ export class RPCPeer {
                     break;
             }
         });
+
+        // works in Chrome 18 but not Firefox 10 or 11
+        if (!ArrayBuffer.prototype.slice)
+            ArrayBuffer.prototype.slice = function (start, end) {
+                var that = new Uint8Array(this);
+                if (end == undefined) end = that.length;
+                var result = new ArrayBuffer(end - start);
+                var resultArray = new Uint8Array(result);
+                for (var i = 0; i < resultArray.length; i++)
+                    resultArray[i] = that[i + start];
+                return result;
+            }
     }
     // worker之间注册方法，并通知其他worker更新回调注册表
     public registerExecutor(context: any, executor: RPCExecutor) {
@@ -65,15 +76,18 @@ export class RPCPeer {
         }
         this.contexts.set(executor.context, context);
 
-        const messageData = { "key": MESSAGEKEY_ADDREGISTRY, "data": executor };
+        // const messageData = { "key": MESSAGEKEY_ADDREGISTRY, "data": executor };
+        const messageData = new RPCMessage(MESSAGEKEY_ADDREGISTRY, executor);
+        const buf = webworker_rpc.WebWorkerMessage.encode(messageData).finish().buffer;
         // tslint:disable-next-line:no-console
-        console.log("postMessage: ", messageData);
-        this.channels.forEach((port) => {
-            port.postMessage(messageData);// TODO:transterable
-        });
+        console.log("postMessage: ", MESSAGEKEY_ADDREGISTRY, messageData, buf);
+        const ports = Array.from(this.channels.values());
+        for (const port of ports) {
+            port.postMessage(messageData, [].concat(buf.slice(0)));// TODO:transterable
+        }
     }
     // worker调用其他worker方法
-    public execute(worker: string, packet: RPCWebWorkerPacket) {
+    public execute(worker: string, packet: RPCExecutePacket) {
         // tslint:disable-next-line:no-console
         console.log("callMethod: ", this);
         const executor = this.registry.find((x) => x.context === packet.header.remoteExecutor.context &&
@@ -84,11 +98,13 @@ export class RPCPeer {
             return;
         }
 
-        const messageData = { "key": MESSAGEKEY_RUNMETHOD, "data": packet };
+        // const messageData = { "key": MESSAGEKEY_RUNMETHOD, "data": packet };
+        const messageData = new RPCMessage(MESSAGEKEY_RUNMETHOD, packet);
+        const buf = webworker_rpc.WebWorkerMessage.encode(messageData).finish().buffer;
         // tslint:disable-next-line:no-console
-        console.log("postMessage: ", messageData);
+        console.log("postMessage: ", MESSAGEKEY_RUNMETHOD, messageData, buf);
         if (this.channels.has(worker))
-            this.channels.get(worker).postMessage(messageData);// TODO:transterable
+            this.channels.get(worker).postMessage(messageData, [].concat(buf.slice(0)));// TODO:transterable
     }
     // 增加worker之间的通道联系
     public addLink(worker: string, port: MessagePort) {
@@ -131,34 +147,34 @@ export class RPCPeer {
     private onMessage_AddRegistry(ev: MessageEvent) {
         // tslint:disable-next-line:no-console
         console.log("onMessage_AddRegistry:", ev.data);
-        const { data } = ev.data;
-        if (!data) {
+        const { dataExecutor } = ev.data;
+        if (!dataExecutor) {
             // tslint:disable-next-line:no-console
             console.warn("<data> not in ev.data");
             return;
         }
-        if (!RPCExecutor.checkType(data)) {
+        if (!RPCExecutor.checkType(dataExecutor)) {
             // tslint:disable-next-line:no-console
-            console.warn("<data> type error: ", data);
+            console.warn("<data> type error: ", dataExecutor);
             return;
         }
-        this.registry.push(data as RPCExecutor);
+        this.registry.push(dataExecutor as RPCExecutor);
     }
     private onMessage_RunMethod(ev: MessageEvent) {
         // tslint:disable-next-line:no-console
         console.log("onMessage_RunMethod:", ev.data);
-        const { data } = ev.data;
-        if (!data) {
+        const { dataPackage } = ev.data;
+        if (!dataPackage) {
             // tslint:disable-next-line:no-console
             console.warn("<data> not in ev.data");
             return;
         }
-        if (!RPCWebWorkerPacket.checkType(data)) {
+        if (!RPCExecutePacket.checkType(dataPackage)) {
             // tslint:disable-next-line:no-console
-            console.warn("<data> type error: ", data);
+            console.warn("<data> type error: ", dataPackage);
             return;
         }
-        const packet: RPCWebWorkerPacket = data as RPCWebWorkerPacket;
+        const packet: RPCExecutePacket = dataPackage as RPCExecutePacket;
 
         const remoteExecutor = packet.header.remoteExecutor;
 
@@ -201,7 +217,7 @@ export class RPCPeer {
                     // for (const p of callback.params) {
 
                     // }
-                    this.execute(packet.header.serviceName, new RPCWebWorkerPacket(this.name, callback.method, callback.context, callbackParams));
+                    this.execute(packet.header.serviceName, new RPCExecutePacket(this.name, callback.method, callback.context, callbackParams));
                 }
             });
         }

@@ -1,7 +1,6 @@
 import "phaser";
 // import TestWorker from "worker-loader?name=dist/[name].js!./TestWorker";
 // import { Base64, decode, encode } from "js-base64";
-import { WorkerControl } from "./src/workerControl";
 import { Inject } from "common-injector";
 import ForemanWorker from "worker-loader?name=dist/[name].js!./foremanworker";
 export class World {
