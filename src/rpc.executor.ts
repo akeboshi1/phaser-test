@@ -7,4 +7,10 @@ export class RPCExecutor extends webworker_rpc.Executor {
         if (context !== undefined) this.context = context;
         if (params !== undefined) this.params = params;
     }
+
+    static checkType(obj) {
+        if (!("method" in obj)) return false;
+
+        return true;
+    }
 }

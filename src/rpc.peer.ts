@@ -55,8 +55,10 @@ export class RPCPeer {
         this.registry.push(executor);
         this.contexts.set(executor.context, context);
 
+        const messageData = { "key": MESSAGEKEY_ADDREGISTRY, "data": executor };
+        console.log("postMessage: ", messageData);
         this.channels.forEach((port) => {
-            port.postMessage({ "key": MESSAGEKEY_ADDREGISTRY, "data": executor });// TODO:transterable
+            port.postMessage(messageData);// TODO:transterable
         });
     }
 
@@ -69,8 +71,10 @@ export class RPCPeer {
             return;
         }
 
+        const messageData = { "key": MESSAGEKEY_RUNMETHOD, "data": packet };
+        console.log("postMessage: ", messageData);
         if (this.channels.has(worker))
-            this.channels.get(worker).postMessage({ "key": MESSAGEKEY_RUNMETHOD, "data": packet });// TODO:transterable
+            this.channels.get(worker).postMessage(messageData);// TODO:transterable
     }
 
     public addLink(worker: string, port: MessagePort) {
@@ -113,10 +117,10 @@ export class RPCPeer {
             console.warn("<data> not in ev.data");
             return;
         }
-        // if (!(data instanceof RPCExecutor)) {
-        //     console.warn("<data> type error: ", data);
-        //     return;
-        // }
+        if (!RPCExecutor.checkType(data)) {
+            console.warn("<data> type error: ", data);
+            return;
+        }
         this.registry.push(data as RPCExecutor);
     }
     private onMessage_RunMethod(ev: MessageEvent) {
@@ -126,10 +130,10 @@ export class RPCPeer {
             console.warn("<data> not in ev.data");
             return;
         }
-        // if (!(data instanceof RPCWebWorkerPacket)) {
-        //     console.warn("<data> type error: ", data);
-        //     return;
-        // }
+        if (!RPCWebWorkerPacket.checkType(data)) {
+            console.warn("<data> type error: ", data);
+            return;
+        }
         const packet: RPCWebWorkerPacket = data as RPCWebWorkerPacket;
 
         const remoteExecutor = packet.header.remoteExecutor;
