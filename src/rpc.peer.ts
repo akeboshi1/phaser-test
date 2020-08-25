@@ -60,6 +60,9 @@ export class RPCPeer {
         console.log("registerMethod: ", this);
 
         this.registry.push(executor);
+        if (this.contexts.has(executor.context) && this.contexts.get(executor.context) !== context) {
+            console.warn("<" + executor.context + "> changed");
+        }
         this.contexts.set(executor.context, context);
 
         const messageData = { "key": MESSAGEKEY_ADDREGISTRY, "data": executor };
