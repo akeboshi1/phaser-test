@@ -13,7 +13,7 @@ worker.onmessage = (e) => {
         if (context1.inited) return;
         context1.inited = true;
 
-        context1.peer = new RPCPeer("foreman", worker);
+        peer = new RPCPeer("foreman", worker);
 
         context1.workerA = new TaskWorkerA();
         context1.workerA.postMessage({ "key": "init" });
@@ -29,11 +29,11 @@ worker.onmessage = (e) => {
         const channelAC = new MessageChannel();
         const channelBC = new MessageChannel();
 
-        context1.peer.addLink("workerA", channelFA.port1);
+        peer.addLink("workerA", channelFA.port1);
         context1.workerA.postMessage({ "key": "link", "data": "foreman" }, [channelFA.port2]);
-        context1.peer.addLink("workerB", channelFB.port1);
+        peer.addLink("workerB", channelFB.port1);
         context1.workerB.postMessage({ "key": "link", "data": "foreman" }, [channelFB.port2]);
-        context1.peer.addLink("workerC", channelFC.port1);
+        peer.addLink("workerC", channelFC.port1);
         context1.workerC.postMessage({ "key": "link", "data": "foreman" }, [channelFC.port2]);
 
         context1.workerA.postMessage({ "key": "link", "data": "workerB" }, [channelAB.port1]);
@@ -50,7 +50,7 @@ worker.onmessage = (e) => {
         const param1 = new webworker_rpc.Param();
         param1.t = webworker_rpc.ParamType.str;
         param1.valStr = "callbackFrom";
-        context1.peer.registerExecutor(context1, new RPCExecutor("foremanCallback", "context1", [param1]));
+        peer.registerExecutor(context1, new RPCExecutor("foremanCallback", "context1", [param1]));
 
         context1.workerA.postMessage({ "key": "register" });
         context1.workerB.postMessage({ "key": "register" });
@@ -69,24 +69,23 @@ worker.onmessage = (e) => {
         const paramA = new webworker_rpc.Param();
         paramA.t = webworker_rpc.ParamType.boolean;
         paramA.valBool = true;
-        context1.peer.execute("workerA", new RPCWebWorkerPacket(context1.peer.name, "methodA", "contextA", [paramA], callback));
+        peer.execute("workerA", new RPCWebWorkerPacket(peer.name, "methodA", "contextA", [paramA], callback));
 
         // B
         const paramB = new webworker_rpc.Param();
         paramB.t = webworker_rpc.ParamType.num;
         paramB.valNum = 333;
-        context1.peer.execute("workerB", new RPCWebWorkerPacket(context1.peer.name, "methodB", "contextB", [paramB], callback));
+        peer.execute("workerB", new RPCWebWorkerPacket(peer.name, "methodB", "contextB", [paramB], callback));
 
         // C
         const paramC = new webworker_rpc.Param();
         paramC.t = webworker_rpc.ParamType.str;
         paramC.valStr = "三三三";
-        context1.peer.execute("workerC", new RPCWebWorkerPacket(context1.peer.name, "methodC", "contextC", [paramC], callback));
+        peer.execute("workerC", new RPCWebWorkerPacket(peer.name, "methodC", "contextC", [paramC], callback));
     }
 }
 
 class ForemanContext {
-    public peer: RPCPeer;
     public inited: boolean = false;
     public registed: boolean = false;
     public workerA: TaskWorkerA;
@@ -98,3 +97,4 @@ class ForemanContext {
 }
 
 const context1: ForemanContext = new ForemanContext();
+let peer: RPCPeer;

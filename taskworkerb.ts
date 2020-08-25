@@ -9,18 +9,17 @@ onmessage = (e) => {
         if (contextB.inited) return;
         contextB.inited = true;
 
-        contextB.peer = new RPCPeer("workerB", self as any);
+        peer = new RPCPeer("workerB", self as any);
     } else if (key === "register") {
         const param1 = new webworker_rpc.Param();
         param1.t = webworker_rpc.ParamType.num;
         param1.valNum = 123;
-        contextB.peer.registerExecutor(contextB, new RPCExecutor("methodB", "contextB", [param1]));
+        peer.registerExecutor(contextB, new RPCExecutor("methodB", "contextB", [param1]));
     }
 }
 
 class WorkerBContext {
     public inited: boolean = false;
-    public peer: RPCPeer;
     public methodB(val: number): Promise<webworker_rpc.Param[]> {
         console.log("methodB: ", val);
 
@@ -34,3 +33,4 @@ class WorkerBContext {
 }
 
 const contextB: WorkerBContext = new WorkerBContext();
+let peer: RPCPeer;
