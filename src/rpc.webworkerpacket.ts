@@ -1,6 +1,6 @@
 import { webworker_rpc } from "pixelpai_proto";
 import { RPCExecutor } from "./rpc.executor";
-
+// worker调用其他worker方法的数据结构
 export class RPCWebWorkerPacket extends webworker_rpc.WebWorkerPacket {
     constructor(service: string, method: string, context?: string, params?: webworker_rpc.Param[], callback?: webworker_rpc.Executor) {
         super();

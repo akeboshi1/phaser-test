@@ -6,9 +6,11 @@ import { webworker_rpc } from "pixelpai_proto";
 import { RPCExecutor } from "./src/rpc.executor";
 import { RPCWebWorkerPacket } from "./src/rpc.webworkerpacket";
 
+// 主worker
 const worker: Worker = self as any;
 worker.onmessage = (e) => {
     if (e.data === "init") {
+        // tslint:disable-next-line:no-console
         console.log("foremanworker onmessage: init");
         if (context1.inited) return;
         context1.inited = true;
@@ -56,6 +58,7 @@ worker.onmessage = (e) => {
         context1.workerB.postMessage({ "key": "register" });
         context1.workerC.postMessage({ "key": "register" });
     } else if (e.data === "start") {
+        // tslint:disable-next-line:no-console
         console.log("foremanworker onmessage: start");
         const callback = new webworker_rpc.Executor();
         callback.method = "foremanCallback";
@@ -85,6 +88,7 @@ worker.onmessage = (e) => {
     }
 }
 
+// worker对应的实体，用于注册worker之间的回调，方法
 class ForemanContext {
     public inited: boolean = false;
     public registed: boolean = false;
@@ -92,6 +96,7 @@ class ForemanContext {
     public workerB: TaskWorkerB;
     public workerC: TaskWorkerC;
     public foremanCallback(val: string) {
+        // tslint:disable-next-line:no-console
         console.log("foremanCallback: ", val);
     }
 }
