@@ -56,11 +56,11 @@ export class RPCPeer {
         // works in Chrome 18 but not Firefox 10 or 11
         if (!ArrayBuffer.prototype.slice)
             ArrayBuffer.prototype.slice = function (start, end) {
-                var that = new Uint8Array(this);
-                if (end == undefined) end = that.length;
-                var result = new ArrayBuffer(end - start);
-                var resultArray = new Uint8Array(result);
-                for (var i = 0; i < resultArray.length; i++)
+                const that = new Uint8Array(this);
+                if (end === undefined) end = that.length;
+                const result = new ArrayBuffer(end - start);
+                const resultArray = new Uint8Array(result);
+                for (let i = 0; i < resultArray.length; i++)
                     resultArray[i] = that[i + start];
                 return result;
             }
@@ -72,6 +72,7 @@ export class RPCPeer {
 
         this.registry.push(executor);
         if (this.contexts.has(executor.context) && this.contexts.get(executor.context) !== context) {
+            // tslint:disable-next-line:no-console
             console.warn("<" + executor.context + "> changed");
         }
         this.contexts.set(executor.context, context);
@@ -80,10 +81,12 @@ export class RPCPeer {
         const messageData = new RPCMessage(MESSAGEKEY_ADDREGISTRY, executor);
         const buf = webworker_rpc.WebWorkerMessage.encode(messageData).finish().buffer;
         // tslint:disable-next-line:no-console
-        console.log("postMessage: ", MESSAGEKEY_ADDREGISTRY, messageData, buf);
+        // console.log("postMessage: ", MESSAGEKEY_ADDREGISTRY, messageData, buf);
         const ports = Array.from(this.channels.values());
         for (const port of ports) {
-            port.postMessage(messageData, [].concat(buf.slice(0)));// TODO:transterable
+            // tslint:disable-next-line:no-console
+            console.log("buffer:::" + [].concat(buf.slice(0)));
+            port.postMessage(messageData, [].concat(buf.slice(0)));
         }
     }
     // worker调用其他worker方法
@@ -102,9 +105,12 @@ export class RPCPeer {
         const messageData = new RPCMessage(MESSAGEKEY_RUNMETHOD, packet);
         const buf = webworker_rpc.WebWorkerMessage.encode(messageData).finish().buffer;
         // tslint:disable-next-line:no-console
-        console.log("postMessage: ", MESSAGEKEY_RUNMETHOD, messageData, buf);
-        if (this.channels.has(worker))
-            this.channels.get(worker).postMessage(messageData, [].concat(buf.slice(0)));// TODO:transterable
+        // console.log("postMessage: ", MESSAGEKEY_RUNMETHOD, messageData, buf);
+        if (this.channels.has(worker)) {
+            // tslint:disable-next-line:no-console
+            console.log("buffer:::" + [].concat(buf.slice(0)));
+            this.channels.get(worker).postMessage(messageData, [].concat(buf.slice(0)));
+        }
     }
     // 增加worker之间的通道联系
     public addLink(worker: string, port: MessagePort) {
@@ -226,8 +232,8 @@ export class RPCPeer {
     private executeFunctionByName(functionName: string, context: string, args?: any[]) {
         // // const args = Array.prototype.slice.call(arguments, 2);
         // const namespaces = functionName.split(".");
-        // var func = namespaces.pop();
-        // for (var i = 0; i < namespaces.length; i++) {
+        // const func = namespaces.pop();
+        // for (const i = 0; i < namespaces.length; i++) {
         //     context = context[namespaces[i]];
         // }
         // return context[func].apply(context, args);
