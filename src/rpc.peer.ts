@@ -6,6 +6,7 @@ export const MESSAGEKEY_LINK: string = "link";
 export const MESSAGEKEY_ADDREGISTRY: string = "addRegistry";
 export const MESSAGEKEY_RUNMETHOD: string = "runMethod";
 
+// 各个worker之间通信桥梁
 export class RPCPeer {
     public name: string;
     private worker: Worker;
@@ -15,10 +16,12 @@ export class RPCPeer {
 
     constructor(name: string, w: Worker) {
         if (!w) {
+            // tslint:disable-next-line:no-console
             console.error("param <worker> error");
             return;
         }
         if (!name) {
+            // tslint:disable-next-line:no-console
             console.error("param <name> error");
             return;
         }
@@ -32,10 +35,12 @@ export class RPCPeer {
         this.worker.addEventListener("message", (ev: MessageEvent) => {
             const { key } = ev.data;
             if (!key) {
+                // tslint:disable-next-line:no-console
                 console.warn("<key> not in ev.data");
                 return;
             }
 
+            // tslint:disable-next-line:no-console
             console.log("peer on message:", ev.data);
             switch (key) {
                 case MESSAGEKEY_LINK:
@@ -43,46 +48,54 @@ export class RPCPeer {
                     break;
 
                 default:
+                    // tslint:disable-next-line:no-console
                     console.warn("got message outof control: ", ev.data);
                     break;
             }
         });
     }
-
+    // worker之间注册方法，并通知其他worker更新回调注册表
     public registerExecutor(context: any, executor: RPCExecutor) {
+        // tslint:disable-next-line:no-console
         console.log("registerMethod: ", this);
 
         this.registry.push(executor);
         this.contexts.set(executor.context, context);
 
         const messageData = { "key": MESSAGEKEY_ADDREGISTRY, "data": executor };
+        // tslint:disable-next-line:no-console
         console.log("postMessage: ", messageData);
         this.channels.forEach((port) => {
             port.postMessage(messageData);// TODO:transterable
         });
     }
-
+    // worker调用其他worker方法
     public execute(worker: string, packet: RPCWebWorkerPacket) {
+        // tslint:disable-next-line:no-console
         console.log("callMethod: ", this);
         const executor = this.registry.find((x) => x.context === packet.header.remoteExecutor.context &&
             x.method === packet.header.remoteExecutor.method);
         if (executor === null) {
+            // tslint:disable-next-line:no-console
             console.error("method <" + packet.header.remoteExecutor.method + "> not register");
             return;
         }
 
         const messageData = { "key": MESSAGEKEY_RUNMETHOD, "data": packet };
+        // tslint:disable-next-line:no-console
         console.log("postMessage: ", messageData);
         if (this.channels.has(worker))
             this.channels.get(worker).postMessage(messageData);// TODO:transterable
     }
-
+    // 增加worker之间的通道联系
     public addLink(worker: string, port: MessagePort) {
         this.channels.set(worker, port);
+        // tslint:disable-next-line:no-console
         console.log("onMessage_Link:", this.channels);
         port.onmessage = (ev: MessageEvent) => {
             const { key } = ev.data;
             if (!key) {
+                // tslint:disable-next-line:no-console
                 console.warn("<key> not in ev.data");
                 return;
             }
@@ -95,6 +108,7 @@ export class RPCPeer {
                     break;
 
                 default:
+                    // tslint:disable-next-line:no-console
                     console.warn("got message outof control: ", ev.data);
                     break;
             }
@@ -104,6 +118,7 @@ export class RPCPeer {
     private onMessage_Link(ev: MessageEvent) {
         const { data } = ev.data;
         if (!data) {
+            // tslint:disable-next-line:no-console
             console.warn("<data> not in ev.data");
             return;
         }
@@ -111,26 +126,32 @@ export class RPCPeer {
         this.addLink(data, port);
     }
     private onMessage_AddRegistry(ev: MessageEvent) {
+        // tslint:disable-next-line:no-console
         console.log("onMessage_AddRegistry:", ev.data);
         const { data } = ev.data;
         if (!data) {
+            // tslint:disable-next-line:no-console
             console.warn("<data> not in ev.data");
             return;
         }
         if (!RPCExecutor.checkType(data)) {
+            // tslint:disable-next-line:no-console
             console.warn("<data> type error: ", data);
             return;
         }
         this.registry.push(data as RPCExecutor);
     }
     private onMessage_RunMethod(ev: MessageEvent) {
+        // tslint:disable-next-line:no-console
         console.log("onMessage_RunMethod:", ev.data);
         const { data } = ev.data;
         if (!data) {
+            // tslint:disable-next-line:no-console
             console.warn("<data> not in ev.data");
             return;
         }
         if (!RPCWebWorkerPacket.checkType(data)) {
+            // tslint:disable-next-line:no-console
             console.warn("<data> type error: ", data);
             return;
         }
@@ -166,6 +187,7 @@ export class RPCPeer {
         }
         const result = this.executeFunctionByName(remoteExecutor.method, remoteExecutor.context, params);
         if (result !== null && result instanceof Promise) {
+            // tslint:disable-next-line:no-shadowed-variable
             result.then((params) => {
                 // if (e instanceof webworker_rpc.Param[]) return; // TODO
 

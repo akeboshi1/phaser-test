@@ -36,6 +36,7 @@ export class GameScene extends Phaser.Scene {
         this.foreman = new ForemanWorker();
         this.foreman.postMessage("init");
         this.foreman.onmessage = (e) => {
+            // tslint:disable-next-line:no-console
             console.log("Main got message <" + e.data + ">");
         };
     }
@@ -49,12 +50,14 @@ export class GameScene extends Phaser.Scene {
         const imgBtn1 = this.add.image(200, 150, "bubble");
         imgBtn1.setInteractive();
         imgBtn1.once("pointerup", () => {
+            // tslint:disable-next-line:no-console
             console.log("pointerup ; start test");
             this.foreman.postMessage("register");
         });
         const imgBtn2 = this.add.image(300, 150, "bubble");
         imgBtn2.setInteractive();
         imgBtn2.once("pointerup", () => {
+            // tslint:disable-next-line:no-console
             console.log("pointerup ; start test");
             this.foreman.postMessage("start");
         });

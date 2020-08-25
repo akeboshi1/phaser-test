@@ -1,10 +1,11 @@
 import { RPCPeer } from "./src/rpc.peer";
 import { webworker_rpc } from "pixelpai_proto";
 import { RPCExecutor } from "./src/rpc.executor";
-
+// 子worker
 onmessage = (e) => {
     const { key } = e.data;
     if (key === "init") {
+        // tslint:disable-next-line:no-console
         console.log("workerA onmessage: init");
         if (contextA.inited) return;
         contextA.inited = true;
@@ -22,8 +23,8 @@ class WorkerAContext {
     public inited: boolean = false;
     public peer: RPCPeer;
     public methodA(val: boolean): Promise<webworker_rpc.Param[]> {
+        // tslint:disable-next-line:no-console
         console.log("methodA: ", val);
-
         return new Promise<webworker_rpc.Param[]>((resolve, reject) => {
             const param1 = new webworker_rpc.Param();
             param1.t = webworker_rpc.ParamType.str;

@@ -124,10 +124,10 @@ export class WorkerControl {
         const worker = new Worker(url);
         this.workers[name] = worker;
 
-        worker.addEventListener('message', this.onGetMessage);
+        worker.addEventListener("message", this.onGetMessage);
     }
     private onGetMessage(data) {
-        if (data.code != undefined && data.params != undefined) {
+        if (data.code !== undefined && data.params !== undefined) {
             this.callMainMethods(data.code, data.params);
         }
     }
@@ -143,13 +143,13 @@ export class WorkerControl {
 
     // worker => main
     private rpcMethods_main: IRPCMethods;
-    // main. 
+    // main.
     public registerMainMethods(code: number, fn: (params: any) => void) {
         this.rpcMethods_main[code] = {
-            fn: fn
+            fn
         };
     }
-    // worker. 
+    // worker.
     private callMainMethods(code: number, params: any) {
         if (!(code in this.rpcMethods_main)) return;
 
@@ -157,7 +157,7 @@ export class WorkerControl {
     }
 
     // main => worker
-    // mian. 
+    // mian.
     public callWorkerMethods(name: string, code: number, params: any) {
         if (!(name in this.workers)) return;
 

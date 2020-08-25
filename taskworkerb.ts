@@ -5,6 +5,7 @@ import { RPCExecutor } from "./src/rpc.executor";
 onmessage = (e) => {
     const { key } = e.data;
     if (key === "init") {
+        // tslint:disable-next-line:no-console
         console.log("workerB onmessage: init");
         if (contextB.inited) return;
         contextB.inited = true;
@@ -22,8 +23,8 @@ class WorkerBContext {
     public inited: boolean = false;
     public peer: RPCPeer;
     public methodB(val: number): Promise<webworker_rpc.Param[]> {
+        // tslint:disable-next-line:no-console
         console.log("methodB: ", val);
-
         return new Promise<webworker_rpc.Param[]>((resolve, reject) => {
             const param1 = new webworker_rpc.Param();
             param1.t = webworker_rpc.ParamType.str;
