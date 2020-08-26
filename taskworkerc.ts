@@ -16,6 +16,12 @@ onmessage = (e) => {
         param1.t = webworker_rpc.ParamType.arrayBuffer;
         param1.valBytes = new Uint8Array();
         peer.registerExecutor(contextC, new RPCExecutor("methodC", "contextC", [param1]));
+
+
+        const param2 = new webworker_rpc.Param();
+        param2.t = webworker_rpc.ParamType.str;
+        // param2.valBytes = new Uint8Array();
+        peer.registerExecutor(contextC, new RPCExecutor("methodB", "contextC", [param1]));
     }
 }
 
@@ -31,6 +37,7 @@ class WorkerCContext {
             resolve([param1]);
         });
     }
+    public me
 }
 
 const contextC: WorkerCContext = new WorkerCContext();

@@ -1,6 +1,5 @@
-import TaskWorkerA from "worker-loader?name=dist/[name].js!./taskworkera";
-import TaskWorkerB from "worker-loader?name=dist/[name].js!./taskworkerb";
-import TaskWorkerC from "worker-loader?name=dist/[name].js!./taskworkerc";
+import NetWorker from "worker-loader?name=dist/[name].js!./netWorker";
+import HeartBeatWorker from "worker-loader?name=dist/[name].js!./heartBeatworker";
 import { RPCPeer } from "./src/rpc.peer";
 import { webworker_rpc } from "pixelpai_proto";
 import { RPCExecutor, RPCExecutePacket } from "./src/rpc.message";
@@ -10,95 +9,144 @@ const worker: Worker = self as any;
 worker.onmessage = (e) => {
     if (e.data === "init") {
         // tslint:disable-next-line:no-console
-        console.log("foremanworker onmessage: init");
-        if (context1.inited) return;
-        context1.inited = true;
+        console.log("mainWorker onmessage: init");
+        if (context.inited) return;
+        context.inited = true;
 
-        peer = new RPCPeer("foreman", worker);
+        context.peer = new RPCPeer("mainWorker", worker);
+        const netWorker = new NetWorker();
+        const heartBeatworker = new HeartBeatWorker();
+        // 增加worker引用
+        context.addWorker(NET_WORKER, netWorker);
+        context.addWorker(HEARTBEAT_WORKER, heartBeatworker);
+        const initState: WorkerState = {
+            "key": "init"
+        }
+        // 初始化worker状态
+        context.initWorker(NET_WORKER, initState);
+        context.initWorker(HEARTBEAT_WORKER, initState);
 
-        context1.workerA = new TaskWorkerA();
-        context1.workerA.postMessage({ "key": "init" });
-        context1.workerB = new TaskWorkerB();
-        context1.workerB.postMessage({ "key": "init" });
-        context1.workerC = new TaskWorkerC();
-        context1.workerC.postMessage({ "key": "init" });
-
-        const channelFA = new MessageChannel();
-        const channelFB = new MessageChannel();
-        const channelFC = new MessageChannel();
-        const channelAB = new MessageChannel();
-        const channelAC = new MessageChannel();
-        const channelBC = new MessageChannel();
-
-        peer.addLink("workerA", channelFA.port1);
-        context1.workerA.postMessage({ "key": "link", "data": "foreman" }, [channelFA.port2]);
-        peer.addLink("workerB", channelFB.port1);
-        context1.workerB.postMessage({ "key": "link", "data": "foreman" }, [channelFB.port2]);
-        peer.addLink("workerC", channelFC.port1);
-        context1.workerC.postMessage({ "key": "link", "data": "foreman" }, [channelFC.port2]);
-
-        context1.workerA.postMessage({ "key": "link", "data": "workerB" }, [channelAB.port1]);
-        context1.workerB.postMessage({ "key": "link", "data": "workerA" }, [channelAB.port2]);
-        context1.workerA.postMessage({ "key": "link", "data": "workerC" }, [channelAC.port1]);
-        context1.workerC.postMessage({ "key": "link", "data": "workerA" }, [channelAC.port2]);
-        context1.workerB.postMessage({ "key": "link", "data": "workerC" }, [channelBC.port1]);
-        context1.workerC.postMessage({ "key": "link", "data": "workerB" }, [channelBC.port2]);
+        // networker与main之间通道
+        const channelNetToMain = new MessageChannel();
+        // heartbeat与main之间的通道
+        const channelHeartBeatToMain = new MessageChannel();
+        // networker与heartbeat之间的通道
+        const channelNetToHeartBeat = new MessageChannel();
+        const linkMainState: WorkerState = {
+            "key": "link",
+            "data": MAIN_WORKER
+        }
+        // 将worker与channel通道联系起来
+        context.linkMainWorker(NET_WORKER, linkMainState, channelNetToMain);
+        context.linkMainWorker(HEARTBEAT_WORKER, linkMainState, channelHeartBeatToMain);
+        context.linkWorker(NET_WORKER, { "key": "link", "data": HEARTBEAT_WORKER }, channelNetToHeartBeat.port1);
+        context.linkWorker(HEARTBEAT_WORKER, { "key": "link", "data": NET_WORKER }, channelNetToHeartBeat.port2);
 
     } else if (e.data === "register") {
-        if (context1.registed) return;
-        context1.registed = true;
+        // worker注册表方法更新
+        if (context.registed) return;
+        context.registed = true;
 
-        const param1 = new webworker_rpc.Param();
-        param1.t = webworker_rpc.ParamType.str;
-        param1.valStr = "callbackFrom";
-        peer.registerExecutor(context1, new RPCExecutor("foremanCallback", "context1", [param1]));
-
-        context1.workerA.postMessage({ "key": "register" });
-        context1.workerB.postMessage({ "key": "register" });
-        context1.workerC.postMessage({ "key": "register" });
+        const param = new webworker_rpc.Param();
+        param.t = webworker_rpc.ParamType.str;
+        param.valStr = "callbackFrom";
+        context.peer.registerExecutor(context, new RPCExecutor("mainWorkerCallback", "context", [param]));
+        const registerState: WorkerState = {
+            "key": "register"
+        };
+        context.registerExecutor(registerState);
     } else if (e.data === "start") {
+        // 由socket通信影响对应worker
         // tslint:disable-next-line:no-console
-        console.log("foremanworker onmessage: start");
+        console.log("mainWorker onmessage: start");
         const callback = new webworker_rpc.Executor();
-        callback.method = "foremanCallback";
-        callback.context = "context1";
+        callback.method = "mainWorkerCallback";
+        callback.context = "context";
         const paramCB = new webworker_rpc.Param();
         paramCB.t = webworker_rpc.ParamType.str;
         paramCB.valStr = "callbackFrom";
         callback.params = [paramCB];
 
-        // A
-        const paramA = new webworker_rpc.Param();
-        paramA.t = webworker_rpc.ParamType.boolean;
-        paramA.valBool = true;
-        peer.execute("workerA", new RPCExecutePacket(peer.name, "methodA", "contextA", [paramA], callback));
+        // // A
+        // const paramA = new webworker_rpc.Param();
+        // paramA.t = webworker_rpc.ParamType.boolean;
+        // paramA.valBool = true;
+        // peer.execute("workerA", new RPCExecutePacket(peer.name, "methodA", "contextA", [paramA], callback));
 
-        // B
-        const paramB = new webworker_rpc.Param();
-        paramB.t = webworker_rpc.ParamType.num;
-        paramB.valNum = 333;
-        peer.execute("workerB", new RPCExecutePacket(peer.name, "methodB", "contextB", [paramB], callback));
+        // // B
+        // const paramB = new webworker_rpc.Param();
+        // paramB.t = webworker_rpc.ParamType.num;
+        // paramB.valNum = 333;
+        // peer.execute("workerB", new RPCExecutePacket(peer.name, "methodB", "contextB", [paramB], callback));
 
-        // C
-        const paramC = new webworker_rpc.Param();
-        paramC.t = webworker_rpc.ParamType.arrayBuffer;
-        paramC.valBytes = new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0));
-        peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "contextC", [paramC], callback));
+        // // C
+        // const paramC = new webworker_rpc.Param();
+        // paramC.t = webworker_rpc.ParamType.arrayBuffer;
+        // paramC.valBytes = new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0));
+        // peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "contextC", [paramC], callback));
+        // const paramC = new webworker_rpc.Param();
+        // paramC.t = webworker_rpc.ParamType.arrayBuffer;
+        // paramC.valBytes = new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0));
+        // peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "contextC", [paramC], callback));
     }
 }
 
 // worker对应的实体，用于注册worker之间的回调，方法
-class ForemanContext {
+class MainWorkerContext {
     public inited: boolean = false;
     public registed: boolean = false;
-    public workerA: TaskWorkerA;
-    public workerB: TaskWorkerB;
-    public workerC: TaskWorkerC;
-    public foremanCallback(val: string) {
+    public peer: RPCPeer;
+    public workerMap: Map<string, Worker>;
+    public addWorker(name: string, webworker: Worker) {
+        if (!this.workerMap) this.workerMap = new Map();
+        if (this.workerMap[name]) return;
+        this.workerMap[name] = webworker;
+    }
+    public initWorker(name: string, state: WorkerState) {
+        if (!this.workerMap || !this.workerMap[name]) return;
+        // tslint:disable-next-line:no-shadowed-variable
+        const worker: Worker = this.workerMap[name];
+        worker.postMessage(state);
+    }
+
+    public linkMainWorker(name: string, state: WorkerState, channel: MessageChannel) {
+        if (!this.workerMap || !this.workerMap[name]) return;
+        this.peer.addLink(name, channel.port1);
+        // tslint:disable-next-line:no-shadowed-variable
+        const worker: Worker = this.workerMap[name];
+        worker.postMessage(state, [channel.port2]);
+    }
+    public linkWorker(name: string, state: WorkerState, port: MessagePort) {
+        if (!this.workerMap || !this.workerMap[name]) return;
+        // tslint:disable-next-line:no-shadowed-variable
+        const worker: Worker = this.workerMap[name];
+        worker.postMessage(state, [port]);
+    }
+    public registerExecutor(state: WorkerState) {
+        this.workerMap.forEach((value: Worker) => {
+            value.postMessage(state);
+        });
+    }
+    public mainWorkerCallback_A(val: string) {
         // tslint:disable-next-line:no-console
-        console.log("foremanCallback: ", val);
+        console.log("mainWorkerCallback: ", val);
+    }
+    public mainWorkerCallback_B(val: string) {
+        // tslint:disable-next-line:no-console
+        console.log("mainWorkerCallback: ", val);
+    }
+    public mainWorkerCallback_C(val: string) {
+        // tslint:disable-next-line:no-console
+        console.log("mainWorkerCallback: ", val);
     }
 }
 
-const context1: ForemanContext = new ForemanContext();
-let peer: RPCPeer;
+interface WorkerState {
+    key: string,
+    data?: any
+}
+
+const context: MainWorkerContext = new MainWorkerContext();
+const MAIN_WORKER: string = "mainworker";
+const NET_WORKER: string = "networker";
+const HEARTBEAT_WORKER: string = "heartbeatworker";
