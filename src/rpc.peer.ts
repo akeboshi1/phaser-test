@@ -205,6 +205,11 @@ export class RPCPeer {
                             params.push(param.valStr);
                         }
                         break;
+                    case webworker_rpc.ParamType.arrayBuffer:
+                        {
+                            params.push(param.valBytes);
+                        }
+                        break;
                     default:
                         break;
                 }
