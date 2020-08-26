@@ -81,8 +81,8 @@ worker.onmessage = (e) => {
 
         // C
         const paramC = new webworker_rpc.Param();
-        paramC.t = webworker_rpc.ParamType.str;
-        paramC.valStr = "三三三";
+        paramC.t = webworker_rpc.ParamType.arrayBuffer;
+        paramC.valBytes = new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0));
         peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "contextC", [paramC], callback));
     }
 }

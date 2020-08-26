@@ -13,15 +13,15 @@ onmessage = (e) => {
         peer = new RPCPeer("workerC", self as any);
     } else if (key === "register") {
         const param1 = new webworker_rpc.Param();
-        param1.t = webworker_rpc.ParamType.str;
-        param1.valStr = "xxx";
+        param1.t = webworker_rpc.ParamType.arrayBuffer;
+        param1.valBytes = new Uint8Array();
         peer.registerExecutor(contextC, new RPCExecutor("methodC", "contextC", [param1]));
     }
 }
 
 class WorkerCContext {
     public inited: boolean = false;
-    public methodC(val: string): Promise<webworker_rpc.Param[]> {
+    public methodC(val: Uint8Array): Promise<webworker_rpc.Param[]> {
         // tslint:disable-next-line:no-console
         console.log("methodC: ", val);
         return new Promise<webworker_rpc.Param[]>((resolve, reject) => {
