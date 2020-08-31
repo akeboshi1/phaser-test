@@ -28,6 +28,7 @@ export class RPCExecutePacket extends webworker_rpc.ExecutePacket {
     }
 
     static checkType(obj) {
+        if (!obj) return false;
         if (!("header" in obj)) return false;
         const header = obj["header"];
         if (!("serviceName" in header)) return false;
@@ -49,7 +50,64 @@ export class RPCExecutor extends webworker_rpc.Executor {
     }
 
     static checkType(obj) {
+        if (!obj) return false;
         if (!("method" in obj)) return false;
+        if ("params" in obj) {
+            if (!Array.isArray(obj["params"])) return false;
+            if (obj["params"].length > 0) {
+                if (!RPCParam.checkType(obj["params"][0])) return false;
+            }
+        }
+
+        return true;
+    }
+}
+
+export class RPCParam extends webworker_rpc.Param {
+    constructor(t: webworker_rpc.ParamType, val?: any) {
+        super();
+
+        this.t = t;
+        if (val !== undefined && val !== null) {
+            switch (t) {
+                case webworker_rpc.ParamType.str:
+                    if (typeof val !== "string") {
+                        console.error(`${val} is not type of string`);
+                        return;
+                    }
+                    this.valStr = val;
+                    break;
+                case webworker_rpc.ParamType.boolean:
+                    if (typeof val !== "boolean") {
+                        console.error(`${val} is not type of boolean`);
+                        return;
+                    }
+                    this.valBool = val;
+                    break;
+                case webworker_rpc.ParamType.num:
+                    if (typeof val !== "number") {
+                        console.error(`${val} is not type of number`);
+                        return;
+                    }
+                    this.valNum = val;
+                    break;
+                case webworker_rpc.ParamType.arrayBuffer:
+                    if (val.constructor !== Uint8Array) {
+                        console.error(`${val} is not type of Uint8Array`);
+                        return;
+                    }
+                    this.valBytes = val;
+                    break;
+                default:
+                    console.error("unkonw type : ", t);
+                    break;
+            }
+        }
+    }
+
+    static checkType(obj) {
+        if (!obj) return false;
+        if (!("t" in obj)) return false;
 
         return true;
     }

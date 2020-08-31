@@ -1,6 +1,6 @@
 import { RPCPeer } from "./src/rpc.peer";
 import { webworker_rpc } from "pixelpai_proto";
-import { RPCExecutor } from "./src/rpc.message";
+import { RPCExecutor, RPCParam } from "./src/rpc.message";
 
 onmessage = (e) => {
     const { key } = e.data;
@@ -12,10 +12,8 @@ onmessage = (e) => {
 
         peer = new RPCPeer("workerC", self as any);
     } else if (key === "register") {
-        const param1 = new webworker_rpc.Param();
-        param1.t = webworker_rpc.ParamType.arrayBuffer;
-        param1.valBytes = new Uint8Array();
-        peer.registerExecutor(contextC, new RPCExecutor("methodC", "contextC", [param1]));
+        peer.registerExecutor(contextC, new RPCExecutor("methodC", "contextC",
+            [new RPCParam(webworker_rpc.ParamType.arrayBuffer)]));
     }
 }
 
@@ -25,10 +23,7 @@ class WorkerCContext {
         // tslint:disable-next-line:no-console
         console.log("methodC: ", val);
         return new Promise<webworker_rpc.Param[]>((resolve, reject) => {
-            const param1 = new webworker_rpc.Param();
-            param1.t = webworker_rpc.ParamType.str;
-            param1.valStr = "callback from WorkerC";
-            resolve([param1]);
+            resolve([new RPCParam(webworker_rpc.ParamType.str, "callback from WorkerC")]);
         });
     }
 }

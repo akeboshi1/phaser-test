@@ -3,7 +3,7 @@ import TaskWorkerB from "worker-loader?name=dist/[name].js!./taskworkerb";
 import TaskWorkerC from "worker-loader?name=dist/[name].js!./taskworkerc";
 import { RPCPeer } from "./src/rpc.peer";
 import { webworker_rpc } from "pixelpai_proto";
-import { RPCExecutor, RPCExecutePacket } from "./src/rpc.message";
+import { RPCExecutor, RPCExecutePacket, RPCParam } from "./src/rpc.message";
 
 // 主worker
 const worker: Worker = self as any;
@@ -48,10 +48,8 @@ worker.onmessage = (e) => {
         if (context1.registed) return;
         context1.registed = true;
 
-        const param1 = new webworker_rpc.Param();
-        param1.t = webworker_rpc.ParamType.str;
-        param1.valStr = "callbackFrom";
-        peer.registerExecutor(context1, new RPCExecutor("foremanCallback", "context1", [param1]));
+        peer.registerExecutor(context1, new RPCExecutor("foremanCallback", "context1",
+            [new RPCParam(webworker_rpc.ParamType.str)]));
 
         context1.workerA.postMessage({ "key": "register" });
         context1.workerB.postMessage({ "key": "register" });
@@ -59,31 +57,20 @@ worker.onmessage = (e) => {
     } else if (e.data === "start") {
         // tslint:disable-next-line:no-console
         console.log("foremanworker onmessage: start");
-        const callback = new webworker_rpc.Executor();
-        callback.method = "foremanCallback";
-        callback.context = "context1";
-        const paramCB = new webworker_rpc.Param();
-        paramCB.t = webworker_rpc.ParamType.str;
-        paramCB.valStr = "callbackFrom";
-        callback.params = [paramCB];
+        const callback = new RPCExecutor("foremanCallback", "context1",
+            [new RPCParam(webworker_rpc.ParamType.str)]);
 
         // A
-        const paramA = new webworker_rpc.Param();
-        paramA.t = webworker_rpc.ParamType.boolean;
-        paramA.valBool = true;
-        peer.execute("workerA", new RPCExecutePacket(peer.name, "methodA", "contextA", [paramA], callback));
+        peer.execute("workerA", new RPCExecutePacket(peer.name, "methodA", "contextA",
+            [new RPCParam(webworker_rpc.ParamType.boolean, true)], callback));
 
         // B
-        const paramB = new webworker_rpc.Param();
-        paramB.t = webworker_rpc.ParamType.num;
-        paramB.valNum = 333;
-        peer.execute("workerB", new RPCExecutePacket(peer.name, "methodB", "contextB", [paramB], callback));
+        peer.execute("workerB", new RPCExecutePacket(peer.name, "methodB", "contextB",
+            [new RPCParam(webworker_rpc.ParamType.num, 333)], callback));
 
         // C
-        const paramC = new webworker_rpc.Param();
-        paramC.t = webworker_rpc.ParamType.arrayBuffer;
-        paramC.valBytes = new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0));
-        peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "contextC", [paramC], callback));
+        peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "contextC",
+            [new RPCParam(webworker_rpc.ParamType.arrayBuffer, new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0)))], callback));
     }
 }
 

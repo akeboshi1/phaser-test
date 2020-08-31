@@ -1,5 +1,5 @@
 import { webworker_rpc } from "pixelpai_proto";
-import { RPCMessage, RPCExecutor, RPCExecutePacket } from "./rpc.message";
+import { RPCMessage, RPCExecutor, RPCExecutePacket, RPCParam } from "./rpc.message";
 
 export const MESSAGEKEY_LINK: string = "link";
 export const MESSAGEKEY_ADDREGISTRY: string = "addRegistry";
@@ -77,15 +77,12 @@ export class RPCPeer {
         }
         this.contexts.set(executor.context, context);
 
-        // const messageData = { "key": MESSAGEKEY_ADDREGISTRY, "data": executor };
         const messageData = new RPCMessage(MESSAGEKEY_ADDREGISTRY, executor);
         const buf = webworker_rpc.WebWorkerMessage.encode(messageData).finish().buffer;
         // tslint:disable-next-line:no-console
-        // console.log("postMessage: ", MESSAGEKEY_ADDREGISTRY, messageData, buf);
+        console.log("postMessage: ", MESSAGEKEY_ADDREGISTRY, messageData, buf);
         const ports = Array.from(this.channels.values());
         for (const port of ports) {
-            // tslint:disable-next-line:no-console
-            console.log("buffer:::" + [].concat(buf.slice(0)));
             port.postMessage(messageData, [].concat(buf.slice(0)));
         }
     }
@@ -101,14 +98,11 @@ export class RPCPeer {
             return;
         }
 
-        // const messageData = { "key": MESSAGEKEY_RUNMETHOD, "data": packet };
         const messageData = new RPCMessage(MESSAGEKEY_RUNMETHOD, packet);
         const buf = webworker_rpc.WebWorkerMessage.encode(messageData).finish().buffer;
         // tslint:disable-next-line:no-console
-        // console.log("postMessage: ", MESSAGEKEY_RUNMETHOD, messageData, buf);
+        console.log("postMessage: ", MESSAGEKEY_RUNMETHOD, messageData, buf);
         if (this.channels.has(worker)) {
-            // tslint:disable-next-line:no-console
-            console.log("buffer:::" + [].concat(buf.slice(0)));
             this.channels.get(worker).postMessage(messageData, [].concat(buf.slice(0)));
         }
     }
@@ -184,8 +178,6 @@ export class RPCPeer {
 
         const remoteExecutor = packet.header.remoteExecutor;
 
-        // TODO: check param
-
         const params = [];
         if (remoteExecutor.params) {
             for (const param of remoteExecutor.params) {
@@ -219,16 +211,49 @@ export class RPCPeer {
         if (result !== null && result instanceof Promise) {
             // tslint:disable-next-line:no-shadowed-variable
             result.then((params) => {
-                // if (e instanceof webworker_rpc.Param[]) return; // TODO
+                let callbackParams: webworker_rpc.Param[] = null;
+                if (params !== undefined && params !== null) {
+                    if (!Array.isArray(params)) {
+                        // tslint:disable-next-line:no-console
+                        console.error(`${params} is not type of array`);
+                        return;
+                    }
+                    if (params.length > 0) {
+                        if (!RPCParam.checkType(params[0])) {
+                            // tslint:disable-next-line:no-console
+                            console.error(`${params[0]} is not type of RPCParam`);
+                            return;
+                        }
+                    }
+                    callbackParams = params as webworker_rpc.Param[];
+                }
 
                 if (packet.header.callbackExecutor) {
                     const callback = packet.header.callbackExecutor;
-                    const callbackParams = params as webworker_rpc.Param[];
-                    // check param type
-                    // for (const p of callback.params) {
-
-                    // }
-                    this.execute(packet.header.serviceName, new RPCExecutePacket(this.name, callback.method, callback.context, callbackParams));
+                    if (callback.params) {
+                        if (!callbackParams) {
+                            // tslint:disable-next-line:no-console
+                            console.error(`no data from promise`);
+                            return;
+                        }
+                        if (callbackParams.length < callback.params.length) {
+                            // tslint:disable-next-line:no-console
+                            console.error(`not enough data from promise`);
+                            return;
+                        }
+                        for (let i = 0; i < callback.params.length; i++) {
+                            const p = callback.params[i];
+                            const cp = callbackParams[i];
+                            if (p.t !== cp.t) {
+                                // tslint:disable-next-line:no-console
+                                console.error(`param type not match: <${p.t}> <${cp.t}>`);
+                                return;
+                            }
+                        }
+                        this.execute(packet.header.serviceName, new RPCExecutePacket(this.name, callback.method, callback.context, callbackParams));
+                    } else {
+                        this.execute(packet.header.serviceName, new RPCExecutePacket(this.name, callback.method, callback.context));
+                    }
                 }
             });
         }
