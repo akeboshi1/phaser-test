@@ -1,8 +1,5 @@
 import "phaser";
-// import TestWorker from "worker-loader?name=dist/[name].js!./TestWorker";
-// import { Base64, decode, encode } from "js-base64";
-import { Inject } from "common-injector";
-import ForemanWorker from "worker-loader?name=dist/[name].js!./foremanworker";
+import MainWorker from "worker-loader?name=dist/[name].js!./MainWorker";
 export class World {
     constructor() {
         const config = {
@@ -23,7 +20,7 @@ export class GameScene extends Phaser.Scene {
     private rt: Phaser.GameObjects.RenderTexture;
     // @Inject() private workerControl: WorkerControl;
 
-    private foreman: Worker;
+    private mainWorker: Worker;
 
     constructor() {
         super({ key: GameScene.name });
@@ -32,9 +29,9 @@ export class GameScene extends Phaser.Scene {
     public preload() {
         this.load.image("bubble", "./resource/bubblebg.png");
 
-        this.foreman = new ForemanWorker();
-        this.foreman.postMessage("init");
-        this.foreman.onmessage = (e) => {
+        this.mainWorker = new MainWorker();
+        this.mainWorker.postMessage("init");
+        this.mainWorker.onmessage = (e) => {
             // tslint:disable-next-line:no-console
             console.log("Main got message <" + e.data + ">");
         };
@@ -51,14 +48,14 @@ export class GameScene extends Phaser.Scene {
         imgBtn1.once("pointerup", () => {
             // tslint:disable-next-line:no-console
             console.log("pointerup ; start test");
-            this.foreman.postMessage("register");
+            this.mainWorker.postMessage("register");
         });
         const imgBtn2 = this.add.image(300, 150, "bubble");
         imgBtn2.setInteractive();
         imgBtn2.once("pointerup", () => {
             // tslint:disable-next-line:no-console
             console.log("pointerup ; start test");
-            this.foreman.postMessage("start");
+            this.mainWorker.postMessage("start");
         });
 
         // this.workerControl = new WorkerControl();

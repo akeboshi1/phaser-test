@@ -127,18 +127,6 @@ class MainWorkerContext {
             value.postMessage(state);
         });
     }
-    public mainWorkerCallback_A(val: string) {
-        // tslint:disable-next-line:no-console
-        console.log("mainWorkerCallback: ", val);
-    }
-    public mainWorkerCallback_B(val: string) {
-        // tslint:disable-next-line:no-console
-        console.log("mainWorkerCallback: ", val);
-    }
-    public mainWorkerCallback_C(val: string) {
-        // tslint:disable-next-line:no-console
-        console.log("mainWorkerCallback: ", val);
-    }
 }
 
 interface WorkerState {
