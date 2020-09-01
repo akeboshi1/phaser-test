@@ -18,9 +18,6 @@ onmessage = (e) => {
             const port = e.ports[i];
             peer.addLink(data[i], port);
         }
-    } else if (key === "register") {
-        // peer.registerExecutor(contextB, new RPCExecutor("methodB", "contextB",
-        //     [new RPCParam(webworker_rpc.ParamType.num)]));
     }
 }
 

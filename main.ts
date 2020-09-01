@@ -46,16 +46,9 @@ export class GameScene extends Phaser.Scene {
 
         this.rt = this.add.renderTexture(400, 300, 400, 400).setOrigin(0.5);
 
-        const imgBtn1 = this.add.image(200, 150, "bubble");
-        imgBtn1.setInteractive();
-        imgBtn1.once("pointerup", () => {
-            // tslint:disable-next-line:no-console
-            console.log("pointerup ; start test");
-            this.foreman.postMessage("register");
-        });
-        const imgBtn2 = this.add.image(300, 150, "bubble");
-        imgBtn2.setInteractive();
-        imgBtn2.once("pointerup", () => {
+        const imgBtn = this.add.image(300, 150, "bubble");
+        imgBtn.setInteractive();
+        imgBtn.once("pointerup", () => {
             // tslint:disable-next-line:no-console
             console.log("pointerup ; start test");
             this.foreman.postMessage("start");

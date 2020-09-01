@@ -2,7 +2,6 @@ import { webworker_rpc } from "pixelpai_proto";
 import { RPCMessage, RPCExecutor, RPCExecutePacket, RPCParam } from "./rpc.message";
 
 export const MESSAGEKEY_LINK: string = "link";
-export const MESSAGEKEY_SYNCREGISTRY: string = "syncRegistry";
 export const MESSAGEKEY_ADDREGISTRY: string = "addRegistry";
 export const MESSAGEKEY_RUNMETHOD: string = "runMethod";
 
@@ -39,13 +38,10 @@ export class RPCPeer {
             }
 
             // tslint:disable-next-line:no-console
-            console.log("peer on message:", ev.data);
+            console.log(this.name + " peer on message:", ev.data);
             switch (key) {
                 case MESSAGEKEY_LINK:
                     this.onMessage_Link(ev);
-                    break;
-                case MESSAGEKEY_SYNCREGISTRY:
-                    this.onMessage_SyncRegistry(ev);
                     break;
 
                 default:
@@ -67,31 +63,10 @@ export class RPCPeer {
                 return result;
             }
     }
-    // worker之间注册方法，并通知其他worker更新回调注册表
-    private postRegisterExecutor(executor: RPCExecutor, worker?: string) {
-        // tslint:disable-next-line:no-console
-        console.log("postRegisterExecutor: ", this);
-
-        const messageData = new RPCMessage(MESSAGEKEY_ADDREGISTRY, executor);
-        const buf = webworker_rpc.WebWorkerMessage.encode(messageData).finish().buffer;
-        // tslint:disable-next-line:no-console
-        console.log("postMessage: ", MESSAGEKEY_ADDREGISTRY, messageData, buf);
-        if (worker !== undefined) {
-            if (this.channels.has(worker)) {
-                const port = this.channels.get(worker);
-                port.postMessage(messageData, [].concat(buf.slice(0)));
-            }
-        } else {
-            const ports = Array.from(this.channels.values());
-            for (const port of ports) {
-                port.postMessage(messageData, [].concat(buf.slice(0)));
-            }
-        }
-    }
     // worker调用其他worker方法
     public execute(worker: string, packet: RPCExecutePacket) {
         // tslint:disable-next-line:no-console
-        console.log("callMethod: ", this);
+        console.log(this.name + " callMethod: ", worker, packet);
         const executor = this.registry.find((x) => x.context === packet.header.remoteExecutor.context &&
             x.method === packet.header.remoteExecutor.method);
         if (executor === null) {
@@ -102,8 +77,6 @@ export class RPCPeer {
 
         const messageData = new RPCMessage(MESSAGEKEY_RUNMETHOD, packet);
         const buf = webworker_rpc.WebWorkerMessage.encode(messageData).finish().buffer;
-        // tslint:disable-next-line:no-console
-        console.log("postMessage: ", MESSAGEKEY_RUNMETHOD, messageData, buf);
         if (this.channels.has(worker)) {
             this.channels.get(worker).postMessage(messageData, [].concat(buf.slice(0)));
         }
@@ -112,7 +85,7 @@ export class RPCPeer {
     public addLink(worker: string, port: MessagePort) {
         this.channels.set(worker, port);
         // tslint:disable-next-line:no-console
-        console.log("addLink:", this.channels);
+        console.log(this.name + " addLink:", worker);
         port.onmessage = (ev: MessageEvent) => {
             const { key } = ev.data;
             if (!key) {
@@ -134,13 +107,32 @@ export class RPCPeer {
                     break;
             }
         }
-    }
-    public syncRegistry() {
+
+        // post registry
         for (const func of RPCFunctions) {
-            this.postRegisterExecutor(func);
+            this.postRegisterExecutor(func, worker);
         }
     }
 
+    // 通知其他worker添加回调注册表
+    private postRegisterExecutor(executor: RPCExecutor, worker?: string) {
+        // tslint:disable-next-line:no-console
+        console.log(this.name + " postRegisterExecutor: ", executor, worker);
+
+        const messageData = new RPCMessage(MESSAGEKEY_ADDREGISTRY, executor);
+        const buf = webworker_rpc.WebWorkerMessage.encode(messageData).finish().buffer;
+        if (worker !== undefined) {
+            if (this.channels.has(worker)) {
+                const port = this.channels.get(worker);
+                port.postMessage(messageData, [].concat(buf.slice(0)));
+            }
+        } else {
+            const ports = Array.from(this.channels.values());
+            for (const port of ports) {
+                port.postMessage(messageData, [].concat(buf.slice(0)));
+            }
+        }
+    }
     private onMessage_Link(ev: MessageEvent) {
         const { data } = ev.data;
         if (!data) {
@@ -151,12 +143,9 @@ export class RPCPeer {
         const port = ev.ports[0];
         this.addLink(data, port);
     }
-    private onMessage_SyncRegistry(ev: MessageEvent) {
-        this.syncRegistry();
-    }
     private onMessage_AddRegistry(ev: MessageEvent) {
         // tslint:disable-next-line:no-console
-        console.log("onMessage_AddRegistry:", ev.data);
+        console.log(this.name + " onMessage_AddRegistry:", ev.data);
         const { dataExecutor } = ev.data;
         if (!dataExecutor) {
             // tslint:disable-next-line:no-console
@@ -172,7 +161,7 @@ export class RPCPeer {
     }
     private onMessage_RunMethod(ev: MessageEvent) {
         // tslint:disable-next-line:no-console
-        console.log("onMessage_RunMethod:", ev.data);
+        console.log(this.name + " onMessage_RunMethod:", ev.data);
         const { dataPackage } = ev.data;
         if (!dataPackage) {
             // tslint:disable-next-line:no-console

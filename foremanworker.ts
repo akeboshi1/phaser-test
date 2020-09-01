@@ -35,17 +35,6 @@ worker.onmessage = (e) => {
         context1.workerB.postMessage({ "key": "init", "data": ["foreman", "workerA", "workerC"] }, [channelFB.port2, channelAB.port2, channelBC.port1]);
         context1.workerC.postMessage({ "key": "init", "data": ["foreman", "workerA", "workerB"] }, [channelFC.port2, channelAC.port2, channelBC.port2]);
 
-    } else if (e.data === "register") {
-        if (context1.registed) return;
-        context1.registed = true;
-
-        // peer.registerExecutor(context1, new RPCExecutor("foremanCallback", "context1",
-        //     [new RPCParam(webworker_rpc.ParamType.str)]));
-
-        peer.syncRegistry();
-        context1.workerA.postMessage({ "key": "syncRegistry" });
-        context1.workerB.postMessage({ "key": "syncRegistry" });
-        context1.workerC.postMessage({ "key": "syncRegistry" });
     } else if (e.data === "start") {
         // tslint:disable-next-line:no-console
         console.log("foremanworker onmessage: start");
@@ -69,7 +58,6 @@ worker.onmessage = (e) => {
 // worker对应的实体，用于注册worker之间的回调，方法
 class ForemanContext {
     public inited: boolean = false;
-    public registed: boolean = false;
     public workerA: TaskWorkerA;
     public workerB: TaskWorkerB;
     public workerC: TaskWorkerC;
