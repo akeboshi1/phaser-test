@@ -2,6 +2,7 @@ import { webworker_rpc } from "pixelpai_proto";
 import { RPCMessage, RPCExecutor, RPCExecutePacket, RPCParam } from "./rpc.message";
 
 export const MESSAGEKEY_LINK: string = "link";
+export const MESSAGEKEY_SYNCREGISTRY: string = "syncRegistry";
 export const MESSAGEKEY_ADDREGISTRY: string = "addRegistry";
 export const MESSAGEKEY_RUNMETHOD: string = "runMethod";
 
@@ -11,7 +12,6 @@ export class RPCPeer {
     private worker: Worker;
     private registry: RPCExecutor[];
     private channels: Map<string, MessagePort>;
-    private contexts: Map<string, any>;
 
     constructor(name: string, w: Worker) {
         if (!w) {
@@ -29,7 +29,6 @@ export class RPCPeer {
         this.worker = w;
         this.registry = [];
         this.channels = new Map();
-        this.contexts = new Map();
 
         this.worker.addEventListener("message", (ev: MessageEvent) => {
             const { key } = ev.data;
@@ -44,6 +43,9 @@ export class RPCPeer {
             switch (key) {
                 case MESSAGEKEY_LINK:
                     this.onMessage_Link(ev);
+                    break;
+                case MESSAGEKEY_SYNCREGISTRY:
+                    this.onMessage_SyncRegistry(ev);
                     break;
 
                 default:
@@ -66,24 +68,24 @@ export class RPCPeer {
             }
     }
     // worker之间注册方法，并通知其他worker更新回调注册表
-    public registerExecutor(context: any, executor: RPCExecutor) {
+    private postRegisterExecutor(executor: RPCExecutor, worker?: string) {
         // tslint:disable-next-line:no-console
-        console.log("registerMethod: ", this);
-
-        this.registry.push(executor);
-        if (this.contexts.has(executor.context) && this.contexts.get(executor.context) !== context) {
-            // tslint:disable-next-line:no-console
-            console.warn("<" + executor.context + "> changed");
-        }
-        this.contexts.set(executor.context, context);
+        console.log("postRegisterExecutor: ", this);
 
         const messageData = new RPCMessage(MESSAGEKEY_ADDREGISTRY, executor);
         const buf = webworker_rpc.WebWorkerMessage.encode(messageData).finish().buffer;
         // tslint:disable-next-line:no-console
         console.log("postMessage: ", MESSAGEKEY_ADDREGISTRY, messageData, buf);
-        const ports = Array.from(this.channels.values());
-        for (const port of ports) {
-            port.postMessage(messageData, [].concat(buf.slice(0)));
+        if (worker !== undefined) {
+            if (this.channels.has(worker)) {
+                const port = this.channels.get(worker);
+                port.postMessage(messageData, [].concat(buf.slice(0)));
+            }
+        } else {
+            const ports = Array.from(this.channels.values());
+            for (const port of ports) {
+                port.postMessage(messageData, [].concat(buf.slice(0)));
+            }
         }
     }
     // worker调用其他worker方法
@@ -110,7 +112,7 @@ export class RPCPeer {
     public addLink(worker: string, port: MessagePort) {
         this.channels.set(worker, port);
         // tslint:disable-next-line:no-console
-        console.log("onMessage_Link:", this.channels);
+        console.log("addLink:", this.channels);
         port.onmessage = (ev: MessageEvent) => {
             const { key } = ev.data;
             if (!key) {
@@ -133,6 +135,11 @@ export class RPCPeer {
             }
         }
     }
+    public syncRegistry() {
+        for (const func of RPCFunctions) {
+            this.postRegisterExecutor(func);
+        }
+    }
 
     private onMessage_Link(ev: MessageEvent) {
         const { data } = ev.data;
@@ -143,6 +150,9 @@ export class RPCPeer {
         }
         const port = ev.ports[0];
         this.addLink(data, port);
+    }
+    private onMessage_SyncRegistry(ev: MessageEvent) {
+        this.syncRegistry();
     }
     private onMessage_AddRegistry(ev: MessageEvent) {
         // tslint:disable-next-line:no-console
@@ -268,9 +278,33 @@ export class RPCPeer {
         // }
         // return context[func].apply(context, args);
 
-        if (!this.contexts.has(context)) return null;
+        if (!RPCContexts.has(context)) return null;
 
-        const con = this.contexts.get(context);
+        const con = RPCContexts.get(context);
         return con[functionName].apply(con, args);
     }
+}
+
+let RPCFunctions: RPCExecutor[] = [];
+let RPCContexts: Map<string, any> = new Map();
+
+// decorater
+export function RPCFunction(paramTypes?: webworker_rpc.ParamType[]) {
+    return function (target, name, descriptor) {
+        const context = target.constructor.name;
+        if (!RPCContexts.has(context)) RPCContexts.set(context, target);
+
+        let params: RPCParam[] = [];
+        if (paramTypes !== undefined && paramTypes !== null) {
+            for (const pt of paramTypes) {
+                params.push(new RPCParam(pt));
+            }
+        }
+        if (params.length > 0) {
+            RPCFunctions.push(new RPCExecutor(name, context, params));
+        } else {
+            RPCFunctions.push(new RPCExecutor(name, context));
+        }
+        console.log("decorater: ", RPCFunctions, RPCContexts);
+    };
 }

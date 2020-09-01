@@ -1,4 +1,4 @@
-import { RPCPeer } from "./src/rpc.peer";
+import { RPCPeer, RPCFunction } from "./src/rpc.peer";
 import { webworker_rpc } from "pixelpai_proto";
 import { RPCExecutor, RPCParam } from "./src/rpc.message";
 
@@ -19,13 +19,15 @@ onmessage = (e) => {
             peer.addLink(data[i], port);
         }
     } else if (key === "register") {
-        peer.registerExecutor(contextC, new RPCExecutor("methodC", "contextC",
-            [new RPCParam(webworker_rpc.ParamType.arrayBuffer)]));
+        // peer.registerExecutor(contextC, new RPCExecutor("methodC", "contextC",
+        //     [new RPCParam(webworker_rpc.ParamType.arrayBuffer)]));
     }
 }
 
 class WorkerCContext {
     public inited: boolean = false;
+
+    @RPCFunction([webworker_rpc.ParamType.arrayBuffer])
     public methodC(val: Uint8Array): Promise<webworker_rpc.Param[]> {
         // tslint:disable-next-line:no-console
         console.log("methodC: ", val);

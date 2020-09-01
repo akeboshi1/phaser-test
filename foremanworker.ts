@@ -1,7 +1,7 @@
 import TaskWorkerA from "worker-loader?name=dist/[name].js!./taskworkera";
 import TaskWorkerB from "worker-loader?name=dist/[name].js!./taskworkerb";
 import TaskWorkerC from "worker-loader?name=dist/[name].js!./taskworkerc";
-import { RPCPeer } from "./src/rpc.peer";
+import { RPCPeer, RPCFunction } from "./src/rpc.peer";
 import { webworker_rpc } from "pixelpai_proto";
 import { RPCExecutor, RPCExecutePacket, RPCParam } from "./src/rpc.message";
 
@@ -39,28 +39,29 @@ worker.onmessage = (e) => {
         if (context1.registed) return;
         context1.registed = true;
 
-        peer.registerExecutor(context1, new RPCExecutor("foremanCallback", "context1",
-            [new RPCParam(webworker_rpc.ParamType.str)]));
+        // peer.registerExecutor(context1, new RPCExecutor("foremanCallback", "context1",
+        //     [new RPCParam(webworker_rpc.ParamType.str)]));
 
-        context1.workerA.postMessage({ "key": "register" });
-        context1.workerB.postMessage({ "key": "register" });
-        context1.workerC.postMessage({ "key": "register" });
+        peer.syncRegistry();
+        context1.workerA.postMessage({ "key": "syncRegistry" });
+        context1.workerB.postMessage({ "key": "syncRegistry" });
+        context1.workerC.postMessage({ "key": "syncRegistry" });
     } else if (e.data === "start") {
         // tslint:disable-next-line:no-console
         console.log("foremanworker onmessage: start");
-        const callback = new RPCExecutor("foremanCallback", "context1",
+        const callback = new RPCExecutor("foremanCallback", "ForemanContext",
             [new RPCParam(webworker_rpc.ParamType.str)]);
 
         // A
-        peer.execute("workerA", new RPCExecutePacket(peer.name, "methodA", "contextA",
+        peer.execute("workerA", new RPCExecutePacket(peer.name, "methodA", "WorkerAContext",
             [new RPCParam(webworker_rpc.ParamType.boolean, true)], callback));
 
         // B
-        peer.execute("workerB", new RPCExecutePacket(peer.name, "methodB", "contextB",
+        peer.execute("workerB", new RPCExecutePacket(peer.name, "methodB", "WorkerBContext",
             [new RPCParam(webworker_rpc.ParamType.num, 333)], callback));
 
         // C
-        peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "contextC",
+        peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "WorkerCContext",
             [new RPCParam(webworker_rpc.ParamType.arrayBuffer, new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0)))], callback));
     }
 }
@@ -72,6 +73,8 @@ class ForemanContext {
     public workerA: TaskWorkerA;
     public workerB: TaskWorkerB;
     public workerC: TaskWorkerC;
+
+    @RPCFunction([webworker_rpc.ParamType.str])
     public foremanCallback(val: string) {
         // tslint:disable-next-line:no-console
         console.log("foremanCallback: ", val);
