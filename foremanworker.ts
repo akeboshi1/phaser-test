@@ -17,11 +17,8 @@ worker.onmessage = (e) => {
         peer = new RPCPeer("foreman", worker);
 
         context1.workerA = new TaskWorkerA();
-        context1.workerA.postMessage({ "key": "init" });
         context1.workerB = new TaskWorkerB();
-        context1.workerB.postMessage({ "key": "init" });
         context1.workerC = new TaskWorkerC();
-        context1.workerC.postMessage({ "key": "init" });
 
         const channelFA = new MessageChannel();
         const channelFB = new MessageChannel();
@@ -31,18 +28,12 @@ worker.onmessage = (e) => {
         const channelBC = new MessageChannel();
 
         peer.addLink("workerA", channelFA.port1);
-        context1.workerA.postMessage({ "key": "link", "data": "foreman" }, [channelFA.port2]);
         peer.addLink("workerB", channelFB.port1);
-        context1.workerB.postMessage({ "key": "link", "data": "foreman" }, [channelFB.port2]);
         peer.addLink("workerC", channelFC.port1);
-        context1.workerC.postMessage({ "key": "link", "data": "foreman" }, [channelFC.port2]);
 
-        context1.workerA.postMessage({ "key": "link", "data": "workerB" }, [channelAB.port1]);
-        context1.workerB.postMessage({ "key": "link", "data": "workerA" }, [channelAB.port2]);
-        context1.workerA.postMessage({ "key": "link", "data": "workerC" }, [channelAC.port1]);
-        context1.workerC.postMessage({ "key": "link", "data": "workerA" }, [channelAC.port2]);
-        context1.workerB.postMessage({ "key": "link", "data": "workerC" }, [channelBC.port1]);
-        context1.workerC.postMessage({ "key": "link", "data": "workerB" }, [channelBC.port2]);
+        context1.workerA.postMessage({ "key": "init", "data": ["foreman", "workerB", "workerC"] }, [channelFA.port2, channelAB.port1, channelAC.port1]);
+        context1.workerB.postMessage({ "key": "init", "data": ["foreman", "workerA", "workerC"] }, [channelFB.port2, channelAB.port2, channelBC.port1]);
+        context1.workerC.postMessage({ "key": "init", "data": ["foreman", "workerA", "workerB"] }, [channelFC.port2, channelAC.port2, channelBC.port2]);
 
     } else if (e.data === "register") {
         if (context1.registed) return;

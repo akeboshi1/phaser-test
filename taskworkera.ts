@@ -5,12 +5,19 @@ import { RPCExecutor, RPCParam } from "./src/rpc.message";
 onmessage = (e) => {
     const { key } = e.data;
     if (key === "init") {
+        const { data } = e.data;
+
         // tslint:disable-next-line:no-console
         console.log("workerA onmessage: init");
         if (contextA.inited) return;
         contextA.inited = true;
 
         peer = new RPCPeer("workerA", self as any);
+
+        for (let i = 0; i < e.ports.length; i++) {
+            const port = e.ports[i];
+            peer.addLink(data[i], port);
+        }
     } else if (key === "register") {
         peer.registerExecutor(contextA, new RPCExecutor("methodA", "contextA",
             [new RPCParam(webworker_rpc.ParamType.boolean)]));
