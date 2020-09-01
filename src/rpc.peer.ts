@@ -110,12 +110,12 @@ export class RPCPeer {
 
         // post registry
         for (const func of RPCFunctions) {
-            this.postRegisterExecutor(func, worker);
+            this.postRegistry(func, worker);
         }
     }
 
     // 通知其他worker添加回调注册表
-    private postRegisterExecutor(executor: RPCExecutor, worker?: string) {
+    private postRegistry(executor: RPCExecutor, worker?: string) {
         // tslint:disable-next-line:no-console
         console.log(this.name + " postRegisterExecutor: ", executor, worker);
 
