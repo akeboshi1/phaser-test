@@ -1,5 +1,5 @@
 import { webworker_rpc } from "pixelpai_proto";
-import { RPCMessage, RPCExecutor, RPCExecutePacket, RPCParam } from "./rpc.message";
+import { RPCMessage, RPCExecutor, RPCExecutePacket, RPCParam, RPCRegistryPacket } from "./rpc.message";
 
 export const MESSAGEKEY_LINK: string = "link";
 export const MESSAGEKEY_ADDREGISTRY: string = "addRegistry";
@@ -8,8 +8,9 @@ export const MESSAGEKEY_RUNMETHOD: string = "runMethod";
 // 各个worker之间通信桥梁
 export class RPCPeer {
     public name: string;
+
     private worker: Worker;
-    private registry: RPCExecutor[];
+    private registry: Map<string, webworker_rpc.IExecutor[]>;
     private channels: Map<string, MessagePort>;
 
     constructor(name: string, w: Worker) {
@@ -26,7 +27,7 @@ export class RPCPeer {
 
         this.name = name;
         this.worker = w;
-        this.registry = [];
+        this.registry = new Map();
         this.channels = new Map();
 
         this.worker.addEventListener("message", (ev: MessageEvent) => {
@@ -67,11 +68,16 @@ export class RPCPeer {
     public execute(worker: string, packet: RPCExecutePacket) {
         // tslint:disable-next-line:no-console
         console.log(this.name + " callMethod: ", worker, packet);
-        const executor = this.registry.find((x) => x.context === packet.header.remoteExecutor.context &&
+        if (!this.registry.has(worker)) {
+            // tslint:disable-next-line:no-console
+            console.error("worker <" + worker + "> not registed");
+            return;
+        }
+        const executor = this.registry.get(worker).find((x) => x.context === packet.header.remoteExecutor.context &&
             x.method === packet.header.remoteExecutor.method);
         if (executor === null) {
             // tslint:disable-next-line:no-console
-            console.error("method <" + packet.header.remoteExecutor.method + "> not register");
+            console.error("method <" + packet.header.remoteExecutor.method + "> not registed");
             return;
         }
 
@@ -109,28 +115,30 @@ export class RPCPeer {
         }
 
         // post registry
-        for (const func of RPCFunctions) {
-            this.postRegistry(func, worker);
+        this.postRegistry(worker, new RPCRegistryPacket(this.name, RPCFunctions));
+    }
+    // 返回是否所有已连接worker准备完毕（可调用execute）。注意：未连接的worker不会包含在内
+    public isAllChannelReady(): boolean {
+        for (const w of Array.from(this.channels.keys())) {
+            if (!this.isChannelReady(w)) return false;
         }
+        return true;
+    }
+    // 返回单个worker是否准备完毕（可调用execute）
+    public isChannelReady(worker: string): boolean {
+        return this.registry.has(worker);
     }
 
     // 通知其他worker添加回调注册表
-    private postRegistry(executor: RPCExecutor, worker?: string) {
+    private postRegistry(worker: string, registry: RPCRegistryPacket) {
         // tslint:disable-next-line:no-console
-        console.log(this.name + " postRegisterExecutor: ", executor, worker);
+        console.log(this.name + " postRegistry: ", worker, registry);
 
-        const messageData = new RPCMessage(MESSAGEKEY_ADDREGISTRY, executor);
+        const messageData = new RPCMessage(MESSAGEKEY_ADDREGISTRY, registry);
         const buf = webworker_rpc.WebWorkerMessage.encode(messageData).finish().buffer;
-        if (worker !== undefined) {
-            if (this.channels.has(worker)) {
-                const port = this.channels.get(worker);
-                port.postMessage(messageData, [].concat(buf.slice(0)));
-            }
-        } else {
-            const ports = Array.from(this.channels.values());
-            for (const port of ports) {
-                port.postMessage(messageData, [].concat(buf.slice(0)));
-            }
+        if (this.channels.has(worker)) {
+            const port = this.channels.get(worker);
+            port.postMessage(messageData, [].concat(buf.slice(0)));
         }
     }
     private onMessage_Link(ev: MessageEvent) {
@@ -146,34 +154,35 @@ export class RPCPeer {
     private onMessage_AddRegistry(ev: MessageEvent) {
         // tslint:disable-next-line:no-console
         console.log(this.name + " onMessage_AddRegistry:", ev.data);
-        const { dataExecutor } = ev.data;
-        if (!dataExecutor) {
+        const { dataRegistry } = ev.data;
+        if (!dataRegistry) {
             // tslint:disable-next-line:no-console
             console.warn("<data> not in ev.data");
             return;
         }
-        if (!RPCExecutor.checkType(dataExecutor)) {
+        if (!RPCRegistryPacket.checkType(dataRegistry)) {
             // tslint:disable-next-line:no-console
-            console.warn("<data> type error: ", dataExecutor);
+            console.warn("<data> type error: ", dataRegistry);
             return;
         }
-        this.registry.push(dataExecutor as RPCExecutor);
+        const packet: RPCRegistryPacket = dataRegistry as RPCRegistryPacket;
+        this.registry.set(packet.serviceName, packet.executors);
     }
     private onMessage_RunMethod(ev: MessageEvent) {
         // tslint:disable-next-line:no-console
         console.log(this.name + " onMessage_RunMethod:", ev.data);
-        const { dataPackage } = ev.data;
-        if (!dataPackage) {
+        const { dataExecute } = ev.data;
+        if (!dataExecute) {
             // tslint:disable-next-line:no-console
             console.warn("<data> not in ev.data");
             return;
         }
-        if (!RPCExecutePacket.checkType(dataPackage)) {
+        if (!RPCExecutePacket.checkType(dataExecute)) {
             // tslint:disable-next-line:no-console
-            console.warn("<data> type error: ", dataPackage);
+            console.warn("<data> type error: ", dataExecute);
             return;
         }
-        const packet: RPCExecutePacket = dataPackage as RPCExecutePacket;
+        const packet: RPCExecutePacket = dataExecute as RPCExecutePacket;
 
         const remoteExecutor = packet.header.remoteExecutor;
 
@@ -196,7 +205,7 @@ export class RPCPeer {
                             params.push(param.valStr);
                         }
                         break;
-                    case webworker_rpc.ParamType.arrayBuffer:
+                    case webworker_rpc.ParamType.unit8array:
                         {
                             params.push(param.valBytes);
                         }
@@ -209,22 +218,24 @@ export class RPCPeer {
         const result = this.executeFunctionByName(remoteExecutor.method, remoteExecutor.context, params);
         if (result !== null && result instanceof Promise) {
             // tslint:disable-next-line:no-shadowed-variable
-            result.then((params) => {
+            result.then((data) => {
                 let callbackParams: webworker_rpc.Param[] = null;
-                if (params !== undefined && params !== null) {
-                    if (!Array.isArray(params)) {
+                if (data !== undefined && data !== null) {
+                    if (!Array.isArray(data)) {
                         // tslint:disable-next-line:no-console
-                        console.error(`${params} is not type of array`);
+                        console.error(`${data} is not type of array`);
                         return;
                     }
-                    if (params.length > 0) {
-                        if (!RPCParam.checkType(params[0])) {
-                            // tslint:disable-next-line:no-console
-                            console.error(`${params[0]} is not type of RPCParam`);
-                            return;
+                    if (data.length > 0) {
+                        for (const p of data) {
+                            if (!RPCParam.checkType(p)) {
+                                // tslint:disable-next-line:no-console
+                                console.error(`${p} is not type of RPCParam`);
+                                return;
+                            }
                         }
                     }
-                    callbackParams = params as webworker_rpc.Param[];
+                    callbackParams = data as webworker_rpc.Param[];
                 }
 
                 if (packet.header.callbackExecutor) {

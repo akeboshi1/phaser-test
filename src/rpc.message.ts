@@ -1,15 +1,39 @@
 import { webworker_rpc } from "pixelpai_proto"
 
 export class RPCMessage extends webworker_rpc.WebWorkerMessage {
-    constructor(key: string, data: webworker_rpc.ExecutePacket | webworker_rpc.Executor) {
+    constructor(key: string, data: webworker_rpc.ExecutePacket | webworker_rpc.RegistryPacket) {
         super();
 
         this.key = key;
         if (data instanceof webworker_rpc.ExecutePacket) {
-            this.dataPackage = data;
-        } else if (data instanceof webworker_rpc.Executor) {
-            this.dataExecutor = data;
+            this.dataExecute = data;
+        } else if (data instanceof webworker_rpc.RegistryPacket) {
+            this.dataRegistry = data;
         }
+    }
+}
+
+export class RPCRegistryPacket extends webworker_rpc.RegistryPacket {
+    constructor(service: string, executors: webworker_rpc.Executor[]) {
+        super();
+
+        this.serviceName = service;
+        this.executors = executors;
+    }
+
+    static checkType(obj) {
+        if (!obj) return false;
+        if (!("serviceName" in obj)) return false;
+        if ("executors" in obj) {
+            if (!Array.isArray(obj["executors"])) return false;
+            if (obj["executors"].length > 0) {
+                for (const one of obj["executors"]) {
+                    if (!RPCExecutor.checkType(one)) return false;
+                }
+            }
+        }
+
+        return true;
     }
 }
 
@@ -44,6 +68,7 @@ export class RPCExecutePacket extends webworker_rpc.ExecutePacket {
 export class RPCExecutor extends webworker_rpc.Executor {
     constructor(method: string, context: string, params?: webworker_rpc.Param[]) {
         super();
+
         this.method = method;
         if (context !== undefined) this.context = context;
         if (params !== undefined) this.params = params;
@@ -55,7 +80,9 @@ export class RPCExecutor extends webworker_rpc.Executor {
         if ("params" in obj) {
             if (!Array.isArray(obj["params"])) return false;
             if (obj["params"].length > 0) {
-                if (!RPCParam.checkType(obj["params"][0])) return false;
+                for (const one of obj["params"]) {
+                    if (!RPCParam.checkType(one)) return false;
+                }
             }
         }
 
@@ -91,7 +118,7 @@ export class RPCParam extends webworker_rpc.Param {
                     }
                     this.valNum = val;
                     break;
-                case webworker_rpc.ParamType.arrayBuffer:
+                case webworker_rpc.ParamType.unit8array:
                     if (val.constructor !== Uint8Array) {
                         console.error(`${val} is not type of Uint8Array`);
                         return;

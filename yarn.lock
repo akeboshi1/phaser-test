@@ -136,7 +136,7 @@
 
 "@types/node@^13.7.0":
   version "13.13.15"
-  resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-13.13.15.tgz?cache=0&sync_timestamp=1598395222729&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fnode%2Fdownload%2F%40types%2Fnode-13.13.15.tgz#fe1cc3aa465a3ea6858b793fd380b66c39919766"
+  resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-13.13.15.tgz?cache=0&sync_timestamp=1598656851627&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fnode%2Fdownload%2F%40types%2Fnode-13.13.15.tgz#fe1cc3aa465a3ea6858b793fd380b66c39919766"
   integrity sha1-/hzDqkZaPqaFi3k/04C2bDmRl2Y=
 
 "@types/node@^14.0.13":
@@ -4164,8 +4164,8 @@ pinkie@^2.0.0:
   integrity sha1-clVrgM+g1IqXToDnckjoDtT3+HA=
 
 "pixelpai_proto@git+ssh://git@code.apowo.com:PixelPai/pixelpai_proto.git#typescriptdev":
-  version "1.0.289"
-  resolved "git+ssh://git@code.apowo.com:PixelPai/pixelpai_proto.git#be74cda25c3c17b606bf0f9246ddc9493166a2b2"
+  version "1.0.296"
+  resolved "git+ssh://git@code.apowo.com:PixelPai/pixelpai_proto.git#de8ac0fdffca9bb3c83c5cc53d9175d20800deb1"
   dependencies:
     protobufjs "^6.8.8"
 

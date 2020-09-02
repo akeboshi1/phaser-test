@@ -14,8 +14,6 @@ worker.onmessage = (e) => {
         if (context1.inited) return;
         context1.inited = true;
 
-        peer = new RPCPeer("foreman", worker);
-
         context1.workerA = new TaskWorkerA();
         context1.workerB = new TaskWorkerB();
         context1.workerC = new TaskWorkerC();
@@ -42,16 +40,19 @@ worker.onmessage = (e) => {
             [new RPCParam(webworker_rpc.ParamType.str)]);
 
         // A
-        peer.execute("workerA", new RPCExecutePacket(peer.name, "methodA", "WorkerAContext",
-            [new RPCParam(webworker_rpc.ParamType.boolean, true)], callback));
+        if (peer.isChannelReady("workerA"))
+            peer.execute("workerA", new RPCExecutePacket(peer.name, "methodA", "WorkerAContext",
+                [new RPCParam(webworker_rpc.ParamType.boolean, true)], callback));
 
         // B
-        peer.execute("workerB", new RPCExecutePacket(peer.name, "methodB", "WorkerBContext",
-            [new RPCParam(webworker_rpc.ParamType.num, 333)], callback));
+        if (peer.isChannelReady("workerB"))
+            peer.execute("workerB", new RPCExecutePacket(peer.name, "methodB", "WorkerBContext",
+                [new RPCParam(webworker_rpc.ParamType.num, 333)], callback));
 
         // C
-        peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "WorkerCContext",
-            [new RPCParam(webworker_rpc.ParamType.arrayBuffer, new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0)))], callback));
+        if (peer.isChannelReady("workerC"))
+            peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "WorkerCContext",
+                [new RPCParam(webworker_rpc.ParamType.unit8array, new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0)))], callback));
     }
 }
 
@@ -70,4 +71,4 @@ class ForemanContext {
 }
 
 const context1: ForemanContext = new ForemanContext();
-let peer: RPCPeer;
+let peer: RPCPeer = new RPCPeer("foreman", worker);

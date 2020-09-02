@@ -12,8 +12,6 @@ onmessage = (e) => {
         if (contextB.inited) return;
         contextB.inited = true;
 
-        peer = new RPCPeer("workerB", self as any);
-
         for (let i = 0; i < e.ports.length; i++) {
             const port = e.ports[i];
             peer.addLink(data[i], port);
@@ -35,4 +33,4 @@ class WorkerBContext {
 }
 
 const contextB: WorkerBContext = new WorkerBContext();
-let peer: RPCPeer;
+let peer: RPCPeer = new RPCPeer("workerB", self as any);

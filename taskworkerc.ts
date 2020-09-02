@@ -12,8 +12,6 @@ onmessage = (e) => {
         if (contextC.inited) return;
         contextC.inited = true;
 
-        peer = new RPCPeer("workerC", self as any);
-
         for (let i = 0; i < e.ports.length; i++) {
             const port = e.ports[i];
             peer.addLink(data[i], port);
@@ -24,7 +22,7 @@ onmessage = (e) => {
 class WorkerCContext {
     public inited: boolean = false;
 
-    @RPCFunction([webworker_rpc.ParamType.arrayBuffer])
+    @RPCFunction([webworker_rpc.ParamType.unit8array])
     public methodC(val: Uint8Array): Promise<webworker_rpc.Param[]> {
         // tslint:disable-next-line:no-console
         console.log("methodC: ", val);
@@ -35,4 +33,4 @@ class WorkerCContext {
 }
 
 const contextC: WorkerCContext = new WorkerCContext();
-let peer: RPCPeer;
+let peer: RPCPeer = new RPCPeer("workerC", self as any);
