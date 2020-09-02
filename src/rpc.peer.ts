@@ -1,7 +1,6 @@
 import { webworker_rpc } from "pixelpai_proto";
 import { RPCMessage, RPCExecutor, RPCExecutePacket, RPCParam, RPCRegistryPacket } from "./rpc.message";
 
-export const MESSAGEKEY_LINK: string = "link";
 export const MESSAGEKEY_ADDREGISTRY: string = "addRegistry";
 export const MESSAGEKEY_RUNMETHOD: string = "runMethod";
 
@@ -30,28 +29,6 @@ export class RPCPeer {
         this.registry = new Map();
         this.channels = new Map();
 
-        this.worker.addEventListener("message", (ev: MessageEvent) => {
-            const { key } = ev.data;
-            if (!key) {
-                // tslint:disable-next-line:no-console
-                console.warn("<key> not in ev.data");
-                return;
-            }
-
-            // tslint:disable-next-line:no-console
-            console.log(this.name + " peer on message:", ev.data);
-            switch (key) {
-                case MESSAGEKEY_LINK:
-                    this.onMessage_Link(ev);
-                    break;
-
-                default:
-                    // tslint:disable-next-line:no-console
-                    console.warn("got message outof control: ", ev.data);
-                    break;
-            }
-        });
-
         // works in Chrome 18 but not Firefox 10 or 11
         if (!ArrayBuffer.prototype.slice)
             ArrayBuffer.prototype.slice = function (start, end) {
@@ -67,7 +44,7 @@ export class RPCPeer {
     // worker调用其他worker方法
     public execute(worker: string, packet: RPCExecutePacket) {
         // tslint:disable-next-line:no-console
-        console.log(this.name + " callMethod: ", worker, packet);
+        console.log(this.name + " execute: ", worker, packet);
         if (!this.registry.has(worker)) {
             // tslint:disable-next-line:no-console
             console.error("worker <" + worker + "> not registed");
@@ -140,16 +117,6 @@ export class RPCPeer {
             const port = this.channels.get(worker);
             port.postMessage(messageData, [].concat(buf.slice(0)));
         }
-    }
-    private onMessage_Link(ev: MessageEvent) {
-        const { data } = ev.data;
-        if (!data) {
-            // tslint:disable-next-line:no-console
-            console.warn("<data> not in ev.data");
-            return;
-        }
-        const port = ev.ports[0];
-        this.addLink(data, port);
     }
     private onMessage_AddRegistry(ev: MessageEvent) {
         // tslint:disable-next-line:no-console
