@@ -272,6 +272,5 @@ export function RPCFunction(paramTypes?: webworker_rpc.ParamType[]) {
         } else {
             RPCFunctions.push(new RPCExecutor(name, context));
         }
-        console.log("decorater: ", RPCFunctions, RPCContexts);
     };
 }

@@ -5,7 +5,7 @@ import { RPCPeer, RPCFunction } from "./src/rpc.peer";
 import { webworker_rpc } from "pixelpai_proto";
 import { RPCExecutor, RPCExecutePacket, RPCParam } from "./src/rpc.message";
 
-// 主worker
+// 主worker 创建子worker 并创建连接
 const worker: Worker = self as any;
 worker.onmessage = (e) => {
     if (e.data === "init") {
@@ -21,17 +21,14 @@ worker.onmessage = (e) => {
         const channelFA = new MessageChannel();
         const channelFB = new MessageChannel();
         const channelFC = new MessageChannel();
-        const channelAB = new MessageChannel();
-        const channelAC = new MessageChannel();
-        const channelBC = new MessageChannel();
 
         peer.addLink("workerA", channelFA.port1);
         peer.addLink("workerB", channelFB.port1);
         peer.addLink("workerC", channelFC.port1);
 
-        context1.workerA.postMessage({ "key": "init", "data": ["foreman", "workerB", "workerC"] }, [channelFA.port2, channelAB.port1, channelAC.port1]);
-        context1.workerB.postMessage({ "key": "init", "data": ["foreman", "workerA", "workerC"] }, [channelFB.port2, channelAB.port2, channelBC.port1]);
-        context1.workerC.postMessage({ "key": "init", "data": ["foreman", "workerA", "workerB"] }, [channelFC.port2, channelAC.port2, channelBC.port2]);
+        context1.workerA.postMessage({ "key": "init", "data": ["foreman"] }, [channelFA.port2]);
+        context1.workerB.postMessage({ "key": "init", "data": ["foreman"] }, [channelFB.port2]);
+        context1.workerC.postMessage({ "key": "init", "data": ["foreman"] }, [channelFC.port2]);
 
     } else if (e.data === "start") {
         // tslint:disable-next-line:no-console
