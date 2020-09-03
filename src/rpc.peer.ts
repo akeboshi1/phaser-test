@@ -185,34 +185,18 @@ export class RPCPeer {
         const result = this.executeFunctionByName(remoteExecutor.method, remoteExecutor.context, params);
         if (result !== null && result instanceof Promise) {
             // tslint:disable-next-line:no-shadowed-variable
-            result.then((data) => {
-                let callbackParams: webworker_rpc.Param[] = null;
-                if (data !== undefined && data !== null) {
-                    if (!Array.isArray(data)) {
-                        // tslint:disable-next-line:no-console
-                        console.error(`${data} is not type of array`);
-                        return;
+            result.then((...args) => {
+                let callbackParams: webworker_rpc.Param[] = [];
+                for (const arg of args) {
+                    const t = RPCParam.typeOf(arg);
+                    if (t !== webworker_rpc.ParamType.UNKNOWN) {
+                        callbackParams.push(new RPCParam(t, arg));
                     }
-                    if (data.length > 0) {
-                        for (const p of data) {
-                            if (!RPCParam.checkType(p)) {
-                                // tslint:disable-next-line:no-console
-                                console.error(`${p} is not type of RPCParam`);
-                                return;
-                            }
-                        }
-                    }
-                    callbackParams = data as webworker_rpc.Param[];
                 }
 
                 if (packet.header.callbackExecutor) {
                     const callback = packet.header.callbackExecutor;
                     if (callback.params) {
-                        if (!callbackParams) {
-                            // tslint:disable-next-line:no-console
-                            console.error(`no data from promise`);
-                            return;
-                        }
                         if (callbackParams.length < callback.params.length) {
                             // tslint:disable-next-line:no-console
                             console.error(`not enough data from promise`);

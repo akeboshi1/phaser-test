@@ -23,11 +23,11 @@ class WorkerBContext {
     public inited: boolean = false;
 
     @RPCFunction([webworker_rpc.ParamType.num])
-    public methodB(val: number): Promise<webworker_rpc.Param[]> {
+    public methodB(val: number): Promise<string> {
         // tslint:disable-next-line:no-console
         console.log("methodB: ", val);
-        return new Promise<webworker_rpc.Param[]>((resolve, reject) => {
-            resolve([new RPCParam(webworker_rpc.ParamType.str, "callback from WorkerB")]);
+        return new Promise<string>((resolve, reject) => {
+            resolve("callback from WorkerB");
         });
     }
 }

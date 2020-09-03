@@ -91,6 +91,7 @@ export class RPCExecutor extends webworker_rpc.Executor {
 }
 
 export class RPCParam extends webworker_rpc.Param {
+
     constructor(t: webworker_rpc.ParamType, val?: any) {
         super();
 
@@ -137,5 +138,19 @@ export class RPCParam extends webworker_rpc.Param {
         if (!("t" in obj)) return false;
 
         return true;
+    }
+
+    static typeOf(val): webworker_rpc.ParamType {
+        if (typeof val === "string") {
+            return webworker_rpc.ParamType.str;
+        } else if (typeof val === "boolean") {
+            return webworker_rpc.ParamType.boolean;
+        } else if (typeof val === "number") {
+            return webworker_rpc.ParamType.num;
+        } else if (val.constructor === Uint8Array) {
+            return webworker_rpc.ParamType.unit8array;
+        }
+
+        return webworker_rpc.ParamType.UNKNOWN;
     }
 }

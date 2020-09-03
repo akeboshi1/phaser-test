@@ -37,19 +37,22 @@ worker.onmessage = (e) => {
             [new RPCParam(webworker_rpc.ParamType.str)]);
 
         // A
-        if (peer.isChannelReady("workerA"))
+        if (peer.isChannelReady("workerA")) {
             peer.execute("workerA", new RPCExecutePacket(peer.name, "methodA", "WorkerAContext",
                 [new RPCParam(webworker_rpc.ParamType.boolean, true)], callback));
+        }
 
         // B
-        if (peer.isChannelReady("workerB"))
+        if (peer.isChannelReady("workerB")) {
             peer.execute("workerB", new RPCExecutePacket(peer.name, "methodB", "WorkerBContext",
                 [new RPCParam(webworker_rpc.ParamType.num, 333)], callback));
+        }
 
         // C
-        if (peer.isChannelReady("workerC"))
+        if (peer.isChannelReady("workerC")) {
             peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "WorkerCContext",
                 [new RPCParam(webworker_rpc.ParamType.unit8array, new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0)))], callback));
+        }
     }
 }
 
