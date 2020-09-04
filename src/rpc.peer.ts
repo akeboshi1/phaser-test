@@ -6,7 +6,14 @@ export const MESSAGEKEY_RUNMETHOD: string = "runMethod";
 
 // 各个worker之间通信桥梁
 export class RPCPeer {
-    [x: string]: any;// 解决编译时execute报错
+    ["remote"]: {
+        [worker: string]: {
+            [context: string]: {
+                [method: string]: (callback: webworker_rpc.Executor, ...args) => {}
+            }
+        };
+    }// 解决编译时execute报错，并添加提示
+
     public name: string;
 
     private worker: Worker;
@@ -34,7 +41,7 @@ export class RPCPeer {
         if (!ArrayBuffer.prototype.slice)
             ArrayBuffer.prototype.slice = function (start, end) {
                 const that = new Uint8Array(this);
-                if (end === undefined) end = that.length;
+                if (!end) end = that.length;
                 const result = new ArrayBuffer(end - start);
                 const resultArray = new Uint8Array(result);
                 for (let i = 0; i < resultArray.length; i++)
@@ -53,7 +60,7 @@ export class RPCPeer {
         }
         const executor = this.registry.get(worker).find((x) => x.context === packet.header.remoteExecutor.context &&
             x.method === packet.header.remoteExecutor.method);
-        if (executor === null) {
+        if (!executor) {
             // tslint:disable-next-line:no-console
             console.error("method <" + packet.header.remoteExecutor.method + "> not registed");
             return;
@@ -208,7 +215,7 @@ export class RPCPeer {
             }
         }
         const result = this.executeFunctionByName(remoteExecutor.method, remoteExecutor.context, params);
-        if (result !== null && result instanceof Promise) {
+        if (result && result instanceof Promise) {
             // tslint:disable-next-line:no-shadowed-variable
             result.then((...args) => {
                 let callbackParams: webworker_rpc.Param[] = [];
@@ -246,7 +253,10 @@ export class RPCPeer {
     }
 
     private executeFunctionByName(functionName: string, context: string, args?: any[]) {
-        if (!RPCContexts.has(context)) return null;
+        if (!RPCContexts.has(context)) {
+            console.error("no context exit: ", context);
+            return null;
+        }
 
         const con = RPCContexts.get(context);
         return con[functionName].apply(con, args);
@@ -261,14 +271,9 @@ export class RPCPeer {
                 addProperty(serviceProp, executor.context, {});
             }
 
-            addProperty(serviceProp[executor.context], executor.method, (...args) => {
+            addProperty(serviceProp[executor.context], executor.method, (callback: webworker_rpc.Executor, ...args) => {
                 const params: RPCParam[] = [];
-                let callback: webworker_rpc.Executor = null;
                 for (const arg of args) {
-                    if (arg instanceof webworker_rpc.Executor) {
-                        callback = arg;
-                        continue;
-                    }
                     const t = RPCParam.typeOf(arg);
                     if (t === webworker_rpc.ParamType.UNKNOWN) {
                         console.warn("unknown param type: ", arg);
@@ -283,10 +288,13 @@ export class RPCPeer {
                 }
             });
         }
-        addProperty(this, service, serviceProp);
+
+        if (!this.remote) this.remote = {};
+
+        addProperty(this.remote, service, serviceProp);
 
         // tslint:disable-next-line:no-console
-        console.log("addRegistryProperty", this);
+        console.log(this.name + "addRegistryProperty", this);
     }
 }
 
@@ -300,7 +308,7 @@ export function RPCFunction(paramTypes?: webworker_rpc.ParamType[]) {
         if (!RPCContexts.has(context)) RPCContexts.set(context, target);
 
         let params: RPCParam[] = [];
-        if (paramTypes !== undefined && paramTypes !== null) {
+        if (paramTypes) {
             for (const pt of paramTypes) {
                 params.push(new RPCParam(pt));
             }

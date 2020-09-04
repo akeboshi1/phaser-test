@@ -46,9 +46,9 @@ export class RPCExecutePacket extends webworker_rpc.ExecutePacket {
         this.header.serviceName = service;
         this.header.remoteExecutor = new webworker_rpc.Executor();
         this.header.remoteExecutor.method = method;
-        if (context !== undefined) this.header.remoteExecutor.context = context;
-        if (params !== undefined) this.header.remoteExecutor.params = params;
-        if (callback !== undefined) this.header.callbackExecutor = callback;
+        if (context) this.header.remoteExecutor.context = context;
+        if (params) this.header.remoteExecutor.params = params;
+        if (callback) this.header.callbackExecutor = callback;
     }
 
     static checkType(obj) {
@@ -70,8 +70,8 @@ export class RPCExecutor extends webworker_rpc.Executor {
         super();
 
         this.method = method;
-        if (context !== undefined) this.context = context;
-        if (params !== undefined) this.params = params;
+        if (context) this.context = context;
+        if (params) this.params = params;
     }
 
     static checkType(obj) {
@@ -96,7 +96,7 @@ export class RPCParam extends webworker_rpc.Param {
         super();
 
         this.t = t;
-        if (val !== undefined && val !== null) {
+        if (val) {
             switch (t) {
                 case webworker_rpc.ParamType.str:
                     if (typeof val !== "string") {

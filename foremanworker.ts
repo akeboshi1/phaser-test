@@ -14,9 +14,9 @@ worker.onmessage = (e) => {
         if (context1.inited) return;
         context1.inited = true;
 
-        context1.workerA = new TaskWorkerA();
-        context1.workerB = new TaskWorkerB();
-        context1.workerC = new TaskWorkerC();
+        const workerA = new TaskWorkerA();
+        const workerB = new TaskWorkerB();
+        const workerC = new TaskWorkerC();
 
         const channelFA = new MessageChannel();
         const channelFB = new MessageChannel();
@@ -26,9 +26,9 @@ worker.onmessage = (e) => {
         peer.addLink("workerB", channelFB.port1);
         peer.addLink("workerC", channelFC.port1);
 
-        context1.workerA.postMessage({ "key": "init", "data": ["foreman"] }, [channelFA.port2]);
-        context1.workerB.postMessage({ "key": "init", "data": ["foreman"] }, [channelFB.port2]);
-        context1.workerC.postMessage({ "key": "init", "data": ["foreman"] }, [channelFC.port2]);
+        workerA.postMessage({ "key": "init", "data": ["foreman"] }, [channelFA.port2]);
+        workerB.postMessage({ "key": "init", "data": ["foreman"] }, [channelFB.port2]);
+        workerC.postMessage({ "key": "init", "data": ["foreman"] }, [channelFC.port2]);
 
     } else if (e.data === "start") {
         // tslint:disable-next-line:no-console
@@ -38,23 +38,17 @@ worker.onmessage = (e) => {
 
         // A
         if (peer.isChannelReady("workerA")) {
-            peer.workerA.WorkerAContext.methodA(callback, true);
-            // peer.execute("workerA", new RPCExecutePacket(peer.name, "methodA", "WorkerAContext",
-            //     [new RPCParam(webworker_rpc.ParamType.boolean, true)], callback));
+            peer.remote.workerA.WorkerAContext.methodA(callback, true);
         }
 
         // B
-        if ("workerB" in peer) {
-            peer.workerB.WorkerBContext.methodB(callback, 333);
-            // peer.execute("workerB", new RPCExecutePacket(peer.name, "methodB", "WorkerBContext",
-            //     [new RPCParam(webworker_rpc.ParamType.num, 333)], callback));
+        if ("workerB" in peer.remote) {
+            peer.remote.workerB.WorkerBContext.methodB(null, 333);
         }
 
         // C
         if (peer.isChannelReady("workerC")) {
-            peer.workerC.WorkerCContext.methodC(callback, new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0)));
-            // peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "WorkerCContext",
-            //     [new RPCParam(webworker_rpc.ParamType.unit8array, new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0)))], callback));
+            peer.remote.workerC.WorkerCContext.methodC(callback, new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0)));
         }
     }
 }
@@ -62,9 +56,6 @@ worker.onmessage = (e) => {
 // worker对应的实体，用于注册worker之间的回调，方法
 class ForemanContext {
     public inited: boolean = false;
-    public workerA: TaskWorkerA;
-    public workerB: TaskWorkerB;
-    public workerC: TaskWorkerC;
 
     @RPCFunction([webworker_rpc.ParamType.str])
     public foremanCallback(val: string) {
