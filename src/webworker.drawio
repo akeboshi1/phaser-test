@@ -1,6 +1,6 @@
-<mxfile host="f00b3d29-d629-4a8c-84d0-34e55e67aa17" modified="2020-09-02T01:22:46.720Z" agent="5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Code/1.48.2 Chrome/78.0.3904.130 Electron/7.3.2 Safari/537.36" etag="WkcO2k5qgHDb2Kj26nh2" version="13.1.3" pages="3">
+<mxfile host="f00b3d29-d629-4a8c-84d0-34e55e67aa17" modified="2020-09-04T03:30:01.751Z" agent="5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Code/1.48.2 Chrome/78.0.3904.130 Electron/7.3.2 Safari/537.36" etag="8YG4fa_1tJaenBftMuQE" version="13.1.3" pages="2">
     <diagram name=" 创建结构" id="vOncwjSykvjLEZPpO_hH">
-        <mxGraphModel dx="1122" dy="693" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1122" dy="533" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="f7IRk7dsRdej3k670oUi-0"/>
                 <mxCell id="f7IRk7dsRdej3k670oUi-1" parent="f7IRk7dsRdej3k670oUi-0"/>
@@ -78,18 +78,6 @@
                         <mxPoint x="380" y="570" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="EO4_N59q5k_WsvdqyIVr-3" value="" style="shape=link;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fillColor=#60a917;strokeColor=#2D7600;" parent="f7IRk7dsRdej3k670oUi-1" source="f7IRk7dsRdej3k670oUi-5" target="f7IRk7dsRdej3k670oUi-6" edge="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="330" y="620" as="sourcePoint"/>
-                        <mxPoint x="380" y="570" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="EO4_N59q5k_WsvdqyIVr-4" value="" style="shape=link;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fillColor=#60a917;strokeColor=#2D7600;" parent="f7IRk7dsRdej3k670oUi-1" source="f7IRk7dsRdej3k670oUi-6" target="f7IRk7dsRdej3k670oUi-9" edge="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="330" y="620" as="sourcePoint"/>
-                        <mxPoint x="380" y="570" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
                 <mxCell id="EO4_N59q5k_WsvdqyIVr-5" value="" style="shape=link;html=1;fillColor=#60a917;strokeColor=#2D7600;" parent="f7IRk7dsRdej3k670oUi-1" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
                         <mxPoint x="90" y="520" as="sourcePoint"/>
@@ -103,7 +91,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="D6n6nEyaR1c3yi7auSzh" name="RPCPeer">
-        <mxGraphModel dx="1122" dy="693" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1122" dy="533" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="qafDblIGkmdD1Ma4jw_D-0"/>
                 <mxCell id="qafDblIGkmdD1Ma4jw_D-1" parent="qafDblIGkmdD1Ma4jw_D-0"/>
@@ -275,14 +263,6 @@
                 <mxCell id="UpkyRGYuWqaQMwjeQpJS-11" value="+ callMethod(context:string, methodName:string, params: Param[], callback)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" parent="UpkyRGYuWqaQMwjeQpJS-0" vertex="1">
                     <mxGeometry y="150" width="320" height="52" as="geometry"/>
                 </mxCell>
-            </root>
-        </mxGraphModel>
-    </diagram>
-    <diagram id="R7O8C6ZcXlHjFHoyrMyQ" name="注册表同步">
-        <mxGraphModel dx="1122" dy="693" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
-            <root>
-                <mxCell id="U066wZcby8gek3va9RDh-0"/>
-                <mxCell id="U066wZcby8gek3va9RDh-1" parent="U066wZcby8gek3va9RDh-0"/>
             </root>
         </mxGraphModel>
     </diagram>

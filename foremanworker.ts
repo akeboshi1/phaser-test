@@ -38,20 +38,23 @@ worker.onmessage = (e) => {
 
         // A
         if (peer.isChannelReady("workerA")) {
-            peer.execute("workerA", new RPCExecutePacket(peer.name, "methodA", "WorkerAContext",
-                [new RPCParam(webworker_rpc.ParamType.boolean, true)], callback));
+            peer.workerA.WorkerAContext.methodA(callback, true);
+            // peer.execute("workerA", new RPCExecutePacket(peer.name, "methodA", "WorkerAContext",
+            //     [new RPCParam(webworker_rpc.ParamType.boolean, true)], callback));
         }
 
         // B
-        if (peer.isChannelReady("workerB")) {
-            peer.execute("workerB", new RPCExecutePacket(peer.name, "methodB", "WorkerBContext",
-                [new RPCParam(webworker_rpc.ParamType.num, 333)], callback));
+        if ("workerB" in peer) {
+            peer.workerB.WorkerBContext.methodB(callback, 333);
+            // peer.execute("workerB", new RPCExecutePacket(peer.name, "methodB", "WorkerBContext",
+            //     [new RPCParam(webworker_rpc.ParamType.num, 333)], callback));
         }
 
         // C
         if (peer.isChannelReady("workerC")) {
-            peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "WorkerCContext",
-                [new RPCParam(webworker_rpc.ParamType.unit8array, new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0)))], callback));
+            peer.workerC.WorkerCContext.methodC(callback, new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0)));
+            // peer.execute("workerC", new RPCExecutePacket(peer.name, "methodC", "WorkerCContext",
+            //     [new RPCParam(webworker_rpc.ParamType.unit8array, new Uint8Array(webworker_rpc.Executor.encode(callback).finish().buffer.slice(0)))], callback));
         }
     }
 }

@@ -6,6 +6,7 @@ export const MESSAGEKEY_RUNMETHOD: string = "runMethod";
 
 // 各个worker之间通信桥梁
 export class RPCPeer {
+    [x: string]: any;// 解决编译时execute报错
     public name: string;
 
     private worker: Worker;
@@ -56,6 +57,29 @@ export class RPCPeer {
             // tslint:disable-next-line:no-console
             console.error("method <" + packet.header.remoteExecutor.method + "> not registed");
             return;
+        }
+
+        const regParams = executor.params;
+        const remoteParams = packet.header.remoteExecutor.params;
+        if (regParams && regParams.length > 0) {
+            if (!remoteParams || remoteParams.length === 0) {
+                console.error("execute param error! ", "param.length = 0");
+                return;
+            }
+
+            if (regParams.length > remoteParams.length) {
+                console.error("execute param error! ", "param not enough");
+                return;
+            }
+
+            for (let i = 0; i < regParams.length; i++) {
+                const regP = regParams[i];
+                const remoteP = remoteParams[i];
+                if (regP.t !== remoteP.t) {
+                    console.error("execute param error! ", "type not match, registry: <", regP.t, ">; execute: <", remoteP.t, ">");
+                    return;
+                }
+            }
         }
 
         const messageData = new RPCMessage(MESSAGEKEY_RUNMETHOD, packet);
@@ -134,6 +158,7 @@ export class RPCPeer {
         }
         const packet: RPCRegistryPacket = dataRegistry as RPCRegistryPacket;
         this.registry.set(packet.serviceName, packet.executors);
+        this.addRegistryProperty(packet);
     }
     private onMessage_RunMethod(ev: MessageEvent) {
         // tslint:disable-next-line:no-console
@@ -221,18 +246,47 @@ export class RPCPeer {
     }
 
     private executeFunctionByName(functionName: string, context: string, args?: any[]) {
-        // // const args = Array.prototype.slice.call(arguments, 2);
-        // const namespaces = functionName.split(".");
-        // const func = namespaces.pop();
-        // for (const i = 0; i < namespaces.length; i++) {
-        //     context = context[namespaces[i]];
-        // }
-        // return context[func].apply(context, args);
-
         if (!RPCContexts.has(context)) return null;
 
         const con = RPCContexts.get(context);
         return con[functionName].apply(con, args);
+    }
+
+    private addRegistryProperty(packet: RPCRegistryPacket) {
+        const service = packet.serviceName;
+        const executors = packet.executors;
+        let serviceProp = {};
+        for (const executor of executors) {
+            if (!(executor.context in serviceProp)) {
+                addProperty(serviceProp, executor.context, {});
+            }
+
+            addProperty(serviceProp[executor.context], executor.method, (...args) => {
+                const params: RPCParam[] = [];
+                let callback: webworker_rpc.Executor = null;
+                for (const arg of args) {
+                    if (arg instanceof webworker_rpc.Executor) {
+                        callback = arg;
+                        continue;
+                    }
+                    const t = RPCParam.typeOf(arg);
+                    if (t === webworker_rpc.ParamType.UNKNOWN) {
+                        console.warn("unknown param type: ", arg);
+                        continue;
+                    }
+                    params.push(new RPCParam(t, arg));
+                }
+                if (callback) {
+                    this.execute(service, new RPCExecutePacket(this.name, executor.method, executor.context, params, callback));
+                } else {
+                    this.execute(service, new RPCExecutePacket(this.name, executor.method, executor.context, params));
+                }
+            });
+        }
+        addProperty(this, service, serviceProp);
+
+        // tslint:disable-next-line:no-console
+        console.log("addRegistryProperty", this);
     }
 }
 
@@ -257,4 +311,14 @@ export function RPCFunction(paramTypes?: webworker_rpc.ParamType[]) {
             RPCFunctions.push(new RPCExecutor(name, context));
         }
     };
+}
+
+function addProperty(obj: any, key: string, val: any) {
+    if (key in obj) {
+        // tslint:disable-next-line:no-console
+        console.error("key exits, add property failed!", obj, key);
+        return obj;
+    }
+    obj[key] = val;
+    return obj;
 }
