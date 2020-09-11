@@ -2,25 +2,11 @@ import { RPCPeer, RPCFunction } from "./src/rpc.peer";
 import { webworker_rpc } from "pixelpai_proto";
 import { RPCExecutor, RPCParam } from "./src/rpc.message";
 
-onmessage = (e) => {
-    const { key } = e.data;
-    if (key === "init") {
-        const { data } = e.data;
-
-        // tslint:disable-next-line:no-console
-        console.log("workerB onmessage: init");
-        if (contextB.inited) return;
-        contextB.inited = true;
-
-        for (let i = 0; i < e.ports.length; i++) {
-            const port = e.ports[i];
-            peer.addLink(data[i], port);
-        }
+const worker: Worker = self as any;
+class WorkerBContext extends RPCPeer {
+    constructor() {
+        super("workerB", worker);
     }
-}
-
-class WorkerBContext {
-    public inited: boolean = false;
 
     @RPCFunction([webworker_rpc.ParamType.num])
     public methodB(val: number): Promise<string> {
@@ -32,5 +18,4 @@ class WorkerBContext {
     }
 }
 
-const contextB: WorkerBContext = new WorkerBContext();
-let peer: RPCPeer = new RPCPeer("workerB", self as any);
+const context: WorkerBContext = new WorkerBContext();

@@ -3,6 +3,7 @@ import "phaser";
 // import { Base64, decode, encode } from "js-base64";
 import { Inject } from "common-injector";
 import ForemanWorker from "worker-loader?name=dist/[name].js!./foremanworker";
+import { RPCPeer } from "./src/rpc.peer";
 export class World {
     constructor() {
         const config = {
@@ -23,7 +24,7 @@ export class GameScene extends Phaser.Scene {
     private rt: Phaser.GameObjects.RenderTexture;
     // @Inject() private workerControl: WorkerControl;
 
-    private foreman: Worker;
+    private peer: RPCPeer;
 
     constructor() {
         super({ key: GameScene.name });
@@ -32,12 +33,10 @@ export class GameScene extends Phaser.Scene {
     public preload() {
         this.load.image("bubble", "./resource/bubblebg.png");
 
-        this.foreman = new ForemanWorker();
-        this.foreman.postMessage("init");
-        this.foreman.onmessage = (e) => {
-            // tslint:disable-next-line:no-console
-            console.log("Main got message <" + e.data + ">");
-        };
+        this.peer = new RPCPeer("main");
+        this.peer.linkToWorker("foreman", new ForemanWorker()).onReady(() => {
+            this.peer.remote.foreman.ForemanContext.methodF();
+        });
     }
 
     public create() {
@@ -46,13 +45,13 @@ export class GameScene extends Phaser.Scene {
 
         this.rt = this.add.renderTexture(400, 300, 400, 400).setOrigin(0.5);
 
-        const imgBtn = this.add.image(300, 150, "bubble");
-        imgBtn.setInteractive();
-        imgBtn.once("pointerup", () => {
-            // tslint:disable-next-line:no-console
-            console.log("pointerup ; start test");
-            this.foreman.postMessage("start");
-        });
+        // const imgBtn = this.add.image(300, 150, "bubble");
+        // imgBtn.setInteractive();
+        // imgBtn.once("pointerup", () => {
+        //     // tslint:disable-next-line:no-console
+        //     console.log("pointerup ; start test");
+        //     this.foreman.postMessage("start");
+        // });
 
         // this.workerControl = new WorkerControl();
         // this.workerControl.startHandler();
